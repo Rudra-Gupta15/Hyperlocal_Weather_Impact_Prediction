@@ -139,11 +139,15 @@
         <div id="modelCards" class="model-cards"></div>
       </div>
 
-      <!-- Analytics Overview -->
+      <!-- Analytics Overview - FIXED IMAGE PATH -->
       <div class="graph-card">
         <h3>📈 ANALYTICS OVERVIEW</h3>
         <div class="graph-container">
-          <img src="../results/model_comparison.png" alt="Analytics" />
+          <!-- OPTION 1: If you move image to frontend/public/images/ -->
+          <img src="/images/model_comparison.png" alt="Model Predictions vs Actual" onerror="this.style.display='none'; this.parentElement.innerHTML='<p style=\'text-align:center; color:var(--text-secondary); padding:40px;\'>📊 Analytics chart will appear here once image is uploaded</p>';" />
+          
+          <!-- OPTION 2: Or use a placeholder if image not available -->
+          <!-- <p style="text-align:center; color:var(--text-secondary); padding:40px;">📊 Upload model_comparison.png to /public/images/</p> -->
         </div>
       </div>
 

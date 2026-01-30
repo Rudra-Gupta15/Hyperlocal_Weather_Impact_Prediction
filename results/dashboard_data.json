@@ -1,0 +1,23 @@
+{
+    "city": "Madrid",
+    "temperature": 31,
+    "condition": "Sunny",
+    "best_model": "linear",
+    "models": {
+        "linear": {
+            "MAE": 0.28,
+            "RMSE": 0.34,
+            "R2": 0.9981
+        },
+        "random_forest": {
+            "MAE": 1.233,
+            "RMSE": 1.639,
+            "R2": 0.9556
+        },
+        "gradient_boosting": {
+            "MAE": 1.463,
+            "RMSE": 1.995,
+            "R2": 0.9342
+        }
+    }
+}

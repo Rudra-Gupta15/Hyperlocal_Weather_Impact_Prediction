@@ -4,6 +4,7 @@
  * Created by: Rudra Kumar Gupta
  * Portfolio: https://rudraportfolio-five.vercel.app/
  * UPDATED: Time-based sun/moon logic added
+ * FIXED: Linear Regression correctly shown as best model
  */
 
 // ============================================================================
@@ -636,10 +637,11 @@ function displayMLModels(data) {
 }
 
 function displayDemoMLModels() {
+  // ✅ FIXED: Linear Regression is now correctly marked as best model
   const demoData = {
-    best_model: 'gradient_boosting',
+    best_model: 'linear',  // 🏆 Linear Regression has the best metrics
     models: {
-      linear: { MAE: 0.280, RMSE: 0.340, R2: 0.9981 },
+      linear: { MAE: 0.280, RMSE: 0.340, R2: 0.9981 },  // ⭐ Best performer
       random_forest: { MAE: 1.233, RMSE: 1.639, R2: 0.9556 },
       gradient_boosting: { MAE: 0.780, RMSE: 0.990, R2: 0.9345 }
     }

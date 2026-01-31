@@ -63,11 +63,6 @@
         </div>
 
         <div class="hero-center">
-          <div class="cloud-container">
-            <div class="cloud-puff puff-1"></div>
-            <div class="cloud-puff puff-2"></div>
-            <div class="cloud-puff puff-3"></div>
-          </div>
           <div id="mainWeatherIcon" class="large-icon">☀️</div>
         </div>
       </section>
@@ -139,13 +134,13 @@
         <div id="modelCards" class="model-cards"></div>
       </div>
 
-      <!-- Analytics Overview - FIXED IMAGE PATH -->
+      <!-- Analytics Overview -->
       <div class="graph-card">
         <h3>📈 ANALYTICS OVERVIEW</h3>
         <div class="graph-container">
-          <!-- Image is in frontend/public/images/ folder -->
-          <img src="public/images/model_comparison.png" alt="Model Predictions vs Actual" 
-               onerror="this.src='images/model_comparison.png'; this.onerror=function(){this.src='model_comparison.png'; this.onerror=function(){this.style.display='none'; this.parentElement.innerHTML='<p style=\'text-align:center; color:var(--text-secondary); padding:40px;\'>📊 Analytics chart will appear here once image is uploaded<br><small>Expected location: public/images/model_comparison.png</small></p>';};};" />
+          <img src="model_comparison.png" alt="Model Predictions vs Actual" 
+               style="width: 100%; border-radius: 16px; transition: transform 0.5s ease;"
+               onerror="this.style.display='none'; this.parentElement.innerHTML='<p style=\'text-align:center; color:var(--text-secondary); padding:40px;\'>📊 Analytics chart not found<br><small>Place image at: frontend/model_comparison.png</small></p>';" />
         </div>
       </div>
 

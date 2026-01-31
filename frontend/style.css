@@ -2,6 +2,7 @@
    WEATHER ML DASHBOARD - ENHANCED VERSION
    Premium Fluid Design with Advanced Animations
    Created by: Rudra Kumar Gupta
+   UPDATED: Cloud animations removed
    ======================================== */
 
 :root {
@@ -366,7 +367,7 @@ body::before {
 }
 
 /* ========================================
-   WEATHER HERO - Premium Animation
+   WEATHER HERO - Premium Animation (NO CLOUDS)
    ======================================== */
 
 .weather-hero {
@@ -436,134 +437,11 @@ body::before {
 }
 
 /* ========================================
-   ENHANCED CLOUD ANIMATION - 3D Effect
+   WEATHER ICON - SIMPLIFIED (NO CLOUDS)
    ======================================== */
 
 .hero-center {
   position: relative;
-  perspective: 1000px;
-}
-
-.cloud-container {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 180px;
-  height: 100px;
-  animation: cloudFloat 8s ease-in-out infinite;
-}
-
-@keyframes cloudFloat {
-  0%, 100% {
-    transform: translate(-50%, -50%) translateY(0) rotateX(0deg);
-  }
-  25% {
-    transform: translate(-50%, -50%) translateY(-15px) rotateX(5deg);
-  }
-  50% {
-    transform: translate(-50%, -50%) translateY(-8px) rotateX(-3deg);
-  }
-  75% {
-    transform: translate(-50%, -50%) translateY(-20px) rotateX(4deg);
-  }
-}
-
-.cloud-puff {
-  position: absolute;
-  background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0.15) 0%, 
-    rgba(96, 165, 250, 0.1) 50%,
-    rgba(255, 255, 255, 0.05) 100%);
-  border-radius: 50%;
-  backdrop-filter: blur(10px);
-  box-shadow: 
-    inset 0 2px 10px rgba(255, 255, 255, 0.2),
-    0 4px 20px rgba(96, 165, 250, 0.2);
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
-}
-
-.puff-1 {
-  width: 90px;
-  height: 90px;
-  top: 20px;
-  left: 10px;
-  animation: 
-    puffPulse1 4s infinite,
-    puffDrift1 12s infinite;
-}
-
-.puff-2 {
-  width: 110px;
-  height: 110px;
-  top: 5px;
-  left: 50px;
-  animation: 
-    puffPulse2 5s infinite,
-    puffDrift2 14s infinite;
-}
-
-.puff-3 {
-  width: 80px;
-  height: 80px;
-  top: 25px;
-  left: 90px;
-  animation: 
-    puffPulse3 4.5s infinite,
-    puffDrift3 13s infinite;
-}
-
-@keyframes puffPulse1 {
-  0%, 100% { 
-    transform: scale(1) translateZ(0);
-    opacity: 0.6;
-  }
-  50% { 
-    transform: scale(1.1) translateZ(20px);
-    opacity: 0.8;
-  }
-}
-
-@keyframes puffPulse2 {
-  0%, 100% { 
-    transform: scale(1) translateZ(0);
-    opacity: 0.7;
-  }
-  50% { 
-    transform: scale(1.15) translateZ(30px);
-    opacity: 0.9;
-  }
-}
-
-@keyframes puffPulse3 {
-  0%, 100% { 
-    transform: scale(1) translateZ(0);
-    opacity: 0.5;
-  }
-  50% { 
-    transform: scale(1.12) translateZ(15px);
-    opacity: 0.75;
-  }
-}
-
-@keyframes puffDrift1 {
-  0%, 100% { transform: translateX(0) translateY(0) rotate(0deg); }
-  25% { transform: translateX(-5px) translateY(-3px) rotate(2deg); }
-  50% { transform: translateX(-2px) translateY(-6px) rotate(-1deg); }
-  75% { transform: translateX(-7px) translateY(-2px) rotate(1deg); }
-}
-
-@keyframes puffDrift2 {
-  0%, 100% { transform: translateX(0) translateY(0) rotate(0deg); }
-  33% { transform: translateX(3px) translateY(-4px) rotate(-2deg); }
-  66% { transform: translateX(5px) translateY(-2px) rotate(1deg); }
-}
-
-@keyframes puffDrift3 {
-  0%, 100% { transform: translateX(0) translateY(0) rotate(0deg); }
-  40% { transform: translateX(-4px) translateY(-5px) rotate(3deg); }
-  80% { transform: translateX(-2px) translateY(-3px) rotate(-2deg); }
 }
 
 .hero-center .large-icon {

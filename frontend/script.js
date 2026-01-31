@@ -3,6 +3,7 @@
  * Premium Fluid Experience with Smooth Animations
  * Created by: Rudra Kumar Gupta
  * Portfolio: https://rudraportfolio-five.vercel.app/
+ * UPDATED: Time-based sun/moon logic added
  */
 
 // ============================================================================
@@ -63,97 +64,66 @@ const INDIAN_CITIES = [
   { name: 'Guwahati', state: 'Assam', category: 'Tier 2' },
   { name: 'Solapur', state: 'Maharashtra', category: 'Tier 2' },
   { name: 'Hubli', state: 'Karnataka', category: 'Tier 2' },
-  { name: 'Mysore', state: 'Karnataka', category: 'Tier 2' },
-  { name: 'Tiruchirappalli', state: 'Tamil Nadu', category: 'Tier 2' },
-  { name: 'Bareilly', state: 'Uttar Pradesh', category: 'Tier 2' },
-  { name: 'Aligarh', state: 'Uttar Pradesh', category: 'Tier 2' },
-  { name: 'Tiruppur', state: 'Tamil Nadu', category: 'Tier 2' },
-  { name: 'Moradabad', state: 'Uttar Pradesh', category: 'Tier 2' },
-  { name: 'Jalandhar', state: 'Punjab', category: 'Tier 2' },
-  { name: 'Bhubaneswar', state: 'Odisha', category: 'Tier 2' },
-  { name: 'Salem', state: 'Tamil Nadu', category: 'Tier 2' },
-  { name: 'Warangal', state: 'Telangana', category: 'Tier 2' },
-  { name: 'Guntur', state: 'Andhra Pradesh', category: 'Tier 2' },
-  { name: 'Bhiwandi', state: 'Maharashtra', category: 'Tier 2' },
-  { name: 'Saharanpur', state: 'Uttar Pradesh', category: 'Tier 2' },
-  { name: 'Gorakhpur', state: 'Uttar Pradesh', category: 'Tier 2' },
-  { name: 'Bikaner', state: 'Rajasthan', category: 'Tier 2' },
-  { name: 'Amravati', state: 'Maharashtra', category: 'Tier 2' },
-  { name: 'Noida', state: 'Uttar Pradesh', category: 'Tier 2' },
-  { name: 'Jamshedpur', state: 'Jharkhand', category: 'Tier 2' },
-  { name: 'Bhilai', state: 'Chhattisgarh', category: 'Tier 2' },
-  { name: 'Cuttack', state: 'Odisha', category: 'Tier 2' },
-  { name: 'Kochi', state: 'Kerala', category: 'Tier 2' },
-  { name: 'Udaipur', state: 'Rajasthan', category: 'Tier 2' },
-  { name: 'Bhavnagar', state: 'Gujarat', category: 'Tier 2' },
-  { name: 'Dehradun', state: 'Uttarakhand', category: 'Tier 2' },
-  { name: 'Asansol', state: 'West Bengal', category: 'Tier 2' },
-  { name: 'Nanded', state: 'Maharashtra', category: 'Tier 2' },
-  { name: 'Ajmer', state: 'Rajasthan', category: 'Tier 2' },
-  { name: 'Jamnagar', state: 'Gujarat', category: 'Tier 2' },
-  { name: 'Ujjain', state: 'Madhya Pradesh', category: 'Tier 2' },
-  { name: 'Sangli', state: 'Maharashtra', category: 'Tier 2' },
-  { name: 'Loni', state: 'Uttar Pradesh', category: 'Tier 2' },
-  { name: 'Jhansi', state: 'Uttar Pradesh', category: 'Tier 2' },
-  { name: 'Pondicherry', state: 'Puducherry', category: 'Tier 2' },
-  { name: 'Nellore', state: 'Andhra Pradesh', category: 'Tier 2' },
-  { name: 'Jammu', state: 'Jammu and Kashmir', category: 'Tier 2' },
-  { name: 'Belagavi', state: 'Karnataka', category: 'Tier 2' },
-  { name: 'Raurkela', state: 'Odisha', category: 'Tier 2' },
-  { name: 'Mangalore', state: 'Karnataka', category: 'Tier 2' },
-  { name: 'Tirunelveli', state: 'Tamil Nadu', category: 'Tier 2' },
-  { name: 'Malegaon', state: 'Maharashtra', category: 'Tier 2' },
-  { name: 'Gaya', state: 'Bihar', category: 'Tier 2' },
-  { name: 'Thiruvananthapuram', state: 'Kerala', category: 'Tier 2' },
-  { name: 'Davanagere', state: 'Karnataka', category: 'Tier 2' },
-  { name: 'Kozhikode', state: 'Kerala', category: 'Tier 2' },
-  { name: 'Akola', state: 'Maharashtra', category: 'Tier 2' },
-  { name: 'Kurnool', state: 'Andhra Pradesh', category: 'Tier 2' },
-  { name: 'Bokaro', state: 'Jharkhand', category: 'Tier 2' },
-  { name: 'Rajahmundry', state: 'Andhra Pradesh', category: 'Tier 2' },
-  { name: 'Ballari', state: 'Karnataka', category: 'Tier 2' },
-  { name: 'Agartala', state: 'Tripura', category: 'Tier 2' },
-  { name: 'Bhagalpur', state: 'Bihar', category: 'Tier 2' },
-  { name: 'Latur', state: 'Maharashtra', category: 'Tier 2' },
-  { name: 'Dhule', state: 'Maharashtra', category: 'Tier 2' },
-  { name: 'Korba', state: 'Chhattisgarh', category: 'Tier 2' },
-  { name: 'Bhilwara', state: 'Rajasthan', category: 'Tier 2' },
-  { name: 'Brahmapur', state: 'Odisha', category: 'Tier 2' },
-  { name: 'Muzaffarpur', state: 'Bihar', category: 'Tier 2' },
-  { name: 'Ahmednagar', state: 'Maharashtra', category: 'Tier 2' },
-  { name: 'Kollam', state: 'Kerala', category: 'Tier 2' },
-  { name: 'Raiganj', state: 'West Bengal', category: 'Tier 2' },
-  { name: 'Patiala', state: 'Punjab', category: 'Tier 2' },
-  { name: 'Rohtak', state: 'Haryana', category: 'Tier 2' },
-  { name: 'Vellore', state: 'Tamil Nadu', category: 'Tier 2' },
-  { name: 'Thrissur', state: 'Kerala', category: 'Tier 2' },
-  { name: 'Panipat', state: 'Haryana', category: 'Tier 2' },
-  { name: 'Durgapur', state: 'West Bengal', category: 'Tier 2' },
-  { name: 'Shimla', state: 'Himachal Pradesh', category: 'Tier 2' },
-  { name: 'Imphal', state: 'Manipur', category: 'Tier 2' },
-  { name: 'Shillong', state: 'Meghalaya', category: 'Tier 2' },
-  { name: 'Gangtok', state: 'Sikkim', category: 'Tier 2' },
-  { name: 'Itanagar', state: 'Arunachal Pradesh', category: 'Tier 2' },
-  { name: 'Kohima', state: 'Nagaland', category: 'Tier 2' },
-  { name: 'Aizawl', state: 'Mizoram', category: 'Tier 2' },
-  { name: 'Port Blair', state: 'Andaman and Nicobar', category: 'Tier 2' }
+  { name: 'Mysore', state: 'Karnataka', category: 'Tier 2' }
 ];
-
-// Weather Icons
-const weatherIcons = {
-  '01d': '☀️', '01n': '🌙',
-  '02d': '⛅', '02n': '☁️',
-  '03d': '☁️', '03n': '☁️',
-  '04d': '☁️', '04n': '☁️',
-  '09d': '🌧️', '09n': '🌧️',
-  '10d': '🌦️', '10n': '🌧️',
-  '11d': '⛈️', '11n': '⛈️',
-  '13d': '❄️', '13n': '❄️',
-  '50d': '🌫️', '50n': '🌫️'
-};
 
 let currentCity = 'Nagpur';
 let isLoading = false;
+
+// ============================================================================
+// TIME-BASED WEATHER ICON FUNCTION (NEW!)
+// ============================================================================
+
+/**
+ * Get weather icon based on weather condition AND time of day
+ * Shows sun emoji during day (6 AM - 6 PM), moon at night
+ */
+function getWeatherIconByTime(iconCode) {
+  const now = new Date();
+  const hour = now.getHours();
+  const isDaytime = hour >= 6 && hour < 18; // 6 AM to 6 PM is day
+  
+  // Map of weather conditions
+  const weatherIcons = {
+    // Clear sky
+    '01d': isDaytime ? '☀️' : '🌙',
+    '01n': '🌙',
+    
+    // Few clouds
+    '02d': isDaytime ? '⛅' : '☁️',
+    '02n': '☁️',
+    
+    // Scattered clouds
+    '03d': '☁️',
+    '03n': '☁️',
+    
+    // Broken clouds
+    '04d': '☁️',
+    '04n': '☁️',
+    
+    // Shower rain
+    '09d': '🌧️',
+    '09n': '🌧️',
+    
+    // Rain
+    '10d': isDaytime ? '🌦️' : '🌧️',
+    '10n': '🌧️',
+    
+    // Thunderstorm
+    '11d': '⛈️',
+    '11n': '⛈️',
+    
+    // Snow
+    '13d': '❄️',
+    '13n': '❄️',
+    
+    // Mist/Fog
+    '50d': '🌫️',
+    '50n': '🌫️'
+  };
+  
+  return weatherIcons[iconCode] || (isDaytime ? '☀️' : '🌙');
+}
 
 // ============================================================================
 // INITIALIZATION
@@ -507,7 +477,9 @@ function updateWeatherUI(data, forecastData = null) {
                Math.round(data.main.temp), 800, '°');
 
   const iconCode = data.weather[0]?.icon || '01d';
-  const newIcon = weatherIcons[iconCode] || '☀️';
+  
+  // ⭐ USE TIME-BASED ICON FUNCTION
+  const newIcon = getWeatherIconByTime(iconCode);
   
   // Smooth icon transition
   const iconElement = document.getElementById('mainWeatherIcon');
@@ -569,7 +541,9 @@ function updateHourlyForecast(forecastList) {
     const displayHour = hours % 12 || 12;
 
     const iconCode = item.weather[0]?.icon || '01d';
-    const icon = weatherIcons[iconCode] || '☀️';
+    
+    // ⭐ USE TIME-BASED ICON FUNCTION
+    const icon = getWeatherIconByTime(iconCode);
 
     return `
       <div class="hour-item" style="animation-delay: ${index * 0.1}s">
@@ -607,7 +581,9 @@ function updateWeeklyForecast(forecastList) {
       date.toLocaleDateString('en-US', { weekday: 'short' });
 
     const iconCode = data.weather[0]?.icon || '01d';
-    const icon = weatherIcons[iconCode] || '☀️';
+    
+    // ⭐ USE TIME-BASED ICON FUNCTION
+    const icon = getWeatherIconByTime(iconCode);
     const condition = data.weather[0]?.main || 'Clear';
 
     const tempHigh = Math.round(data.main.temp_max);

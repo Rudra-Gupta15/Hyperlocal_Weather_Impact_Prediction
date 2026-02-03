@@ -190,45 +190,72 @@ function setupKeyboardNavigation() {
 
 // ============================================================================
 // MAP FUNCTIONALITY (LEAFLET.JS)
+// ============================================================================
+
 let map;
 let marker;
 
 function initMap() {
-  // If map container is hidden or has no size, Leaflet will fail. 
-  // We try to init, but we rely on invalidateSize() being called later.
+  const mapEl = document.getElementById('mapCity');
+  if (!mapEl) return;
+
+  // Visual Debugging: Clear previous content if it was an error
+  // mapEl.innerHTML = ''; 
 
   if (map) {
-    map.invalidateSize();
+    try { map.invalidateSize(); } catch (e) {/* ignore */ }
+    return;
+  }
+
+  // 1. Check Library
+  if (typeof L === 'undefined') {
+    mapEl.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#333;text-align:center;padding:10px;">
+      <h3 style="color:#d9534f">Map Library Error</h3>
+      <p>Leaflet.js could not be loaded.</p>
+      <p style="font-size:12px;opacity:0.8">Check 'frontend/lib/leaflet.js' exists.</p>
+    </div>`;
     return;
   }
 
   try {
-    const mapElement = document.getElementById('mapCity');
-    if (!mapElement) return;
+    // 2. Initialize Map
+    // Ensure container is empty before initializing to prevent "Map container is already initialized" error
+    if (mapEl._leaflet_id) {
+      mapEl.innerHTML = ''; // Hard reset if needed, though hazardous
+      // better to just try getting the map instance if we could.
+      // For now, let's assume if map variable is null, we can init.
+    }
 
-    // Center on India (approx)
-    map = L.map('mapCity').setView([20.5937, 78.9629], 5);
+    map = L.map('mapCity', {
+      zoomControl: true, // Explicitly enable controls
+      attributionControl: false // Cleaner look
+    }).setView([20.5937, 78.9629], 5);
 
+    // 3. Add Tile Layer (OpenStreetMap)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
+      attribution: '© OpenStreetMap'
     }).addTo(map);
 
-    // Initial resize attempt
-    map.invalidateSize();
+    // 4. Force Resize
+    setTimeout(() => { map.invalidateSize(); }, 100);
+    setTimeout(() => { map.invalidateSize(); }, 500);
+
   } catch (e) {
-    console.error("Map init failed", e);
+    console.error("Map Logic Error:", e);
+    mapEl.style.background = '#ffe6e6';
+    mapEl.innerHTML = `<div style="padding:20px;color:#cc0000;text-align:center;">
+      <strong>Map Error:</strong><br>${e.message}
+    </div>`;
   }
 }
 
 function updateMapMarker(lat, lon, cityName) {
   if (!map) {
     initMap();
-    // If init failed (e.g. container hidden), try again later
-    if (!map) return;
+    if (!map) return; // Still failed
   }
 
   try {
-    // Update marker
     if (marker) {
       marker.setLatLng([lat, lon]);
     } else {
@@ -239,7 +266,7 @@ function updateMapMarker(lat, lon, cityName) {
     map.setView([lat, lon], 6);
     map.invalidateSize();
   } catch (e) {
-    console.warn("Could not update map marker", e);
+    console.warn("Marker update skipped:", e);
   }
 }
 

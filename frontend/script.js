@@ -236,7 +236,13 @@ function initMap() {
       attribution: '© OpenStreetMap'
     }).addTo(map);
 
-    // 4. Force Resize
+    // 4. Force Resize via ResizeObserver (Robust for Modals)
+    const resizeObserver = new ResizeObserver(() => {
+      if (map) map.invalidateSize();
+    });
+    resizeObserver.observe(mapEl);
+
+    // Initial resize attempts
     setTimeout(() => { map.invalidateSize(); }, 100);
     setTimeout(() => { map.invalidateSize(); }, 500);
 
@@ -256,13 +262,17 @@ function updateMapMarker(lat, lon, cityName) {
   }
 
   try {
+    // Update marker
     if (marker) {
       marker.setLatLng([lat, lon]);
     } else {
       marker = L.marker([lat, lon]).addTo(map);
     }
 
+    // Explicitly open popup
     marker.bindPopup(`<b>${cityName}</b>`).openPopup();
+
+    // Pan and refresh
     map.setView([lat, lon], 6);
     map.invalidateSize();
   } catch (e) {

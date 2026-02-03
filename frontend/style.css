@@ -6,15 +6,19 @@
    ======================================== */
 
 :root {
-  --bg-color: #0b0d14;
-  --sidebar-bg: #1b1d26;
-  --card-bg: #1b1d26;
+  /* Classic Blue Palette */
+  --bg-color: #073965;
+  --sidebar-bg: rgba(7, 66, 118, 0.4);
+  /* Much more transparent sidebar */
+  --card-bg: rgba(7, 66, 118, 0.15);
+  /* Almost clear to see background */
   --text-primary: #ffffff;
-  --text-secondary: #9399a2;
-  --accent-blue: #60a5fa;
+  --text-secondary: #d1e4f5;
+  --accent-blue: #1C609D;
   --accent-yellow: #ffc107;
-  --border-color: rgba(255, 255, 255, 0.04);
-  --glow-blue: rgba(96, 165, 250, 0.3);
+  --border-color: rgba(255, 255, 255, 0.08);
+  /* Slightly more visible border */
+  --glow-blue: rgba(28, 96, 157, 0.4);
   --glow-yellow: rgba(255, 193, 7, 0.2);
 }
 
@@ -40,7 +44,7 @@ body::before {
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
+  background:
     radial-gradient(circle at 20% 30%, rgba(96, 165, 250, 0.08) 0%, transparent 50%),
     radial-gradient(circle at 80% 70%, rgba(255, 193, 7, 0.06) 0%, transparent 50%);
   animation: backgroundPulse 15s ease-in-out infinite;
@@ -49,8 +53,17 @@ body::before {
 }
 
 @keyframes backgroundPulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.1); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
 }
 
 .app {
@@ -65,7 +78,7 @@ body::before {
    ======================================== */
 
 .sidebar {
-  width: 80px;
+  width: 100px;
   background: var(--sidebar-bg);
   display: flex;
   flex-direction: column;
@@ -76,7 +89,7 @@ body::before {
   height: 100vh;
   z-index: 100;
   border-right: 1px solid var(--border-color);
-  backdrop-filter: blur(20px);
+  /* backdrop-filter: blur(20px); removed to see behind */
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -132,25 +145,33 @@ body::before {
 }
 
 .logo-img {
-  width: 50px;
-  height: auto;
-  border-radius: 14px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 50%;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3),
+    0 0 0 2px rgba(255, 255, 255, 0.1);
+  /* Subtle ring */
   transition: all 0.4s ease;
   animation: logoPulse 3s ease-in-out infinite;
 }
 
 @keyframes logoPulse {
-  0%, 100% {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+
+  0%,
+  100% {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(255, 255, 255, 0.1);
   }
+
   50% {
-    box-shadow: 0 4px 20px rgba(96, 165, 250, 0.4), 0 0 25px rgba(96, 165, 250, 0.2);
+    box-shadow: 0 4px 20px rgba(28, 96, 157, 0.4), 0 0 25px rgba(28, 96, 157, 0.2), 0 0 0 2px rgba(255, 255, 255, 0.2);
   }
 }
 
 .logo:hover .logo-img {
-  box-shadow: 0 8px 30px rgba(96, 165, 250, 0.6), 0 0 40px rgba(96, 165, 250, 0.3);
+  box-shadow: 0 8px 30px rgba(28, 96, 157, 0.6), 0 0 40px rgba(28, 96, 157, 0.3), 0 0 0 4px rgba(255, 255, 255, 0.3);
+  transform: rotate(360deg);
+  /* Playful rotation */
   animation: none;
 }
 
@@ -209,7 +230,7 @@ body::before {
   left: 50%;
   width: 0;
   height: 0;
-  background: rgba(96, 165, 250, 0.2);
+  background: rgba(28, 96, 157, 0.2);
   border-radius: 50%;
   transform: translate(-50%, -50%);
   transition: width 0.5s ease, height 0.5s ease;
@@ -228,8 +249,8 @@ body::before {
 
 .nav-btn.active {
   color: var(--accent-blue);
-  background: rgba(96, 165, 250, 0.15);
-  box-shadow: 0 0 20px rgba(96, 165, 250, 0.3);
+  background: rgba(28, 96, 157, 0.15);
+  box-shadow: 0 0 20px rgba(28, 96, 157, 0.3);
 }
 
 .nav-btn svg {
@@ -274,6 +295,7 @@ body::before {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -303,8 +325,8 @@ body::before {
 
 .search-input:focus {
   border-color: var(--accent-blue);
-  box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.1),
-              0 8px 24px rgba(96, 165, 250, 0.15);
+  box-shadow: 0 0 0 4px rgba(28, 96, 157, 0.1),
+    0 8px 24px rgba(28, 96, 157, 0.15);
   transform: translateY(-2px);
 }
 
@@ -339,6 +361,7 @@ body::before {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -361,7 +384,7 @@ body::before {
 }
 
 .city-item:hover {
-  background: rgba(96, 165, 250, 0.1);
+  background: rgba(28, 96, 157, 0.1);
   padding-left: 28px;
   color: var(--accent-blue);
 }
@@ -384,6 +407,7 @@ body::before {
     opacity: 0;
     transform: translateX(-30px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -402,8 +426,15 @@ body::before {
 }
 
 @keyframes titleGlow {
-  0%, 100% { filter: drop-shadow(0 0 10px rgba(96, 165, 250, 0.3)); }
-  50% { filter: drop-shadow(0 0 20px rgba(96, 165, 250, 0.5)); }
+
+  0%,
+  100% {
+    filter: drop-shadow(0 0 10px rgba(96, 165, 250, 0.3));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 20px rgba(96, 165, 250, 0.5));
+  }
 }
 
 .timestamp {
@@ -430,6 +461,7 @@ body::before {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -440,42 +472,92 @@ body::before {
    WEATHER ICON - SIMPLIFIED (NO CLOUDS)
    ======================================== */
 
+/* ========================================
+   WEATHER ICON & CLOUD SHAPE
+   ======================================== */
+
 .hero-center {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Base Sun/Icon - HIDDEN based on user request to "remove the box" */
+.hero-center .large-icon {
+  display: none;
+  font-size: 100px;
+  filter: drop-shadow(0 0 40px var(--glow-yellow));
+  animation: iconFloat 6s ease-in-out infinite;
+  z-index: 10;
   position: relative;
 }
 
-.hero-center .large-icon {
-  font-size: 140px;
-  filter: drop-shadow(0 0 40px var(--glow-yellow));
-  animation: 
-    iconFloat 6s ease-in-out infinite,
-    iconGlow 3s ease-in-out infinite;
-  position: relative;
-  z-index: 10;
-  transform-style: preserve-3d;
+/* CSS Cloud Shape - Fluffy Multi-Puff */
+.hero-center::before {
+  content: '';
+  position: absolute;
+  top: 60%;
+  left: 20%;
+  /* Moved left */
+  width: 100px;
+  height: 100px;
+  background: #fff;
+  border-radius: 50%;
+  z-index: 5;
+  box-shadow:
+    60px 0 0 10px #fff,
+    /* Right puff */
+    30px -40px 0 5px #fff,
+    /* Top center puff */
+    80px -20px 0 0 #fff,
+    /* Top right puff */
+    -20px 20px 0 -10px #fff;
+  /* Small left puff */
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2));
+  animation: cloudFloat 8s ease-in-out infinite reverse;
+}
+
+.hero-center::after {
+  content: none;
+  /* Removed simpler after element */
+}
+
+@keyframes cloudFloat {
+
+  0%,
+  100% {
+    transform: translateY(0) translateX(0);
+  }
+
+  50% {
+    transform: translateY(-8px) translateX(5px);
+  }
 }
 
 @keyframes iconFloat {
-  0%, 100% {
-    transform: translateY(0) translateZ(0) rotateY(0deg);
+
+  0%,
+  100% {
+    transform: translateY(0);
   }
-  25% {
-    transform: translateY(-20px) translateZ(10px) rotateY(5deg);
-  }
+
   50% {
-    transform: translateY(-10px) translateZ(5px) rotateY(-3deg);
-  }
-  75% {
-    transform: translateY(-25px) translateZ(15px) rotateY(4deg);
+    transform: translateY(-15px);
   }
 }
 
 @keyframes iconGlow {
-  0%, 100% {
+
+  0%,
+  100% {
     filter: drop-shadow(0 0 30px var(--glow-yellow));
   }
+
   50% {
-    filter: drop-shadow(0 0 60px var(--glow-yellow));
+    filter: drop-shadow(0 0 50px var(--glow-yellow));
   }
 }
 
@@ -495,7 +577,7 @@ body::before {
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
-  backdrop-filter: blur(10px);
+  /* backdrop-filter: blur(10px); removed to see behind */
 }
 
 .forecast-card::before,
@@ -509,10 +591,10 @@ body::before {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(96, 165, 250, 0.05) 50%, 
-    transparent 100%);
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(96, 165, 250, 0.05) 50%,
+      transparent 100%);
   transition: left 0.8s ease;
 }
 
@@ -571,18 +653,36 @@ body::before {
   animation: hourItemFade 0.6s ease backwards;
 }
 
-.hour-item:nth-child(1) { animation-delay: 0.1s; }
-.hour-item:nth-child(2) { animation-delay: 0.2s; }
-.hour-item:nth-child(3) { animation-delay: 0.3s; }
-.hour-item:nth-child(4) { animation-delay: 0.4s; }
-.hour-item:nth-child(5) { animation-delay: 0.5s; }
-.hour-item:nth-child(6) { animation-delay: 0.6s; }
+.hour-item:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.hour-item:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.hour-item:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.hour-item:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+.hour-item:nth-child(5) {
+  animation-delay: 0.5s;
+}
+
+.hour-item:nth-child(6) {
+  animation-delay: 0.6s;
+}
 
 @keyframes hourItemFade {
   from {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -698,19 +798,40 @@ body::before {
   animation: dayItemSlide 0.5s ease backwards;
 }
 
-.day-item:nth-child(1) { animation-delay: 0.1s; }
-.day-item:nth-child(2) { animation-delay: 0.15s; }
-.day-item:nth-child(3) { animation-delay: 0.2s; }
-.day-item:nth-child(4) { animation-delay: 0.25s; }
-.day-item:nth-child(5) { animation-delay: 0.3s; }
-.day-item:nth-child(6) { animation-delay: 0.35s; }
-.day-item:nth-child(7) { animation-delay: 0.4s; }
+.day-item:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.day-item:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.day-item:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.day-item:nth-child(4) {
+  animation-delay: 0.25s;
+}
+
+.day-item:nth-child(5) {
+  animation-delay: 0.3s;
+}
+
+.day-item:nth-child(6) {
+  animation-delay: 0.35s;
+}
+
+.day-item:nth-child(7) {
+  animation-delay: 0.4s;
+}
 
 @keyframes dayItemSlide {
   from {
     opacity: 0;
     transform: translateX(20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -795,8 +916,15 @@ body::before {
 }
 
 @keyframes modelGlow {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(-10%, -10%); }
+
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  50% {
+    transform: translate(-10%, -10%);
+  }
 }
 
 .model:hover {
@@ -858,6 +986,22 @@ body::before {
 }
 
 /* ========================================
+   MAP CONTAINER
+   ======================================== */
+#mapCity {
+  width: 100%;
+  height: 400px;
+  border-radius: 16px;
+  margin-top: 15px;
+  z-index: 1001;
+  /* High z-index to ensure visibility */
+  display: block;
+  background: #f0f0f0;
+  /* Fallback color */
+  position: relative;
+}
+
+/* ========================================
    FOOTER
    ======================================== */
 
@@ -871,8 +1015,13 @@ body::before {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .footer-credit a {
@@ -912,6 +1061,7 @@ body::before {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -944,6 +1094,7 @@ body::before {
     opacity: 0;
     transform: translateY(40px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -1090,11 +1241,11 @@ body::before {
   border-radius: 50%;
 }
 
-input:checked + .toggle-slider {
+input:checked+.toggle-slider {
   background-color: var(--accent-blue);
 }
 
-input:checked + .toggle-slider:before {
+input:checked+.toggle-slider:before {
   transform: translateX(26px);
 }
 
@@ -1136,7 +1287,8 @@ input:checked + .toggle-slider:before {
   border-top: 1px solid var(--border-color);
 }
 
-.btn-primary, .btn-secondary {
+.btn-primary,
+.btn-secondary {
   padding: 12px 24px;
   border-radius: 10px;
   font-size: 14px;
@@ -1402,7 +1554,8 @@ input:checked + .toggle-slider:before {
     flex-direction: column;
   }
 
-  .btn-primary, .btn-secondary {
+  .btn-primary,
+  .btn-secondary {
     width: 100%;
   }
 
@@ -1450,8 +1603,15 @@ input:checked + .toggle-slider:before {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 0.3; }
+
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
 }
 
 /* ========================================

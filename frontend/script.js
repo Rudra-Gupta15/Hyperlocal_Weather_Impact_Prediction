@@ -23,7 +23,7 @@ const INDIAN_CITIES = [
   { name: 'Hyderabad', state: 'Telangana', category: 'Metro' },
   { name: 'Chennai', state: 'Tamil Nadu', category: 'Metro' },
   { name: 'Kolkata', state: 'West Bengal', category: 'Metro' },
-  
+
   // Tier 1 Cities
   { name: 'Pune', state: 'Maharashtra', category: 'Tier 1' },
   { name: 'Ahmedabad', state: 'Gujarat', category: 'Tier 1' },
@@ -39,7 +39,7 @@ const INDIAN_CITIES = [
   { name: 'Patna', state: 'Bihar', category: 'Tier 1' },
   { name: 'Vadodara', state: 'Gujarat', category: 'Tier 1' },
   { name: 'Ghaziabad', state: 'Uttar Pradesh', category: 'Tier 1' },
-  
+
   // Tier 2 Cities
   { name: 'Ludhiana', state: 'Punjab', category: 'Tier 2' },
   { name: 'Agra', state: 'Uttar Pradesh', category: 'Tier 2' },
@@ -83,46 +83,46 @@ function getWeatherIconByTime(iconCode) {
   const now = new Date();
   const hour = now.getHours();
   const isDaytime = hour >= 6 && hour < 18; // 6 AM to 6 PM is day
-  
+
   // Map of weather conditions
   const weatherIcons = {
     // Clear sky
     '01d': isDaytime ? '☀️' : '🌙',
     '01n': '🌙',
-    
+
     // Few clouds
     '02d': isDaytime ? '⛅' : '☁️',
     '02n': '☁️',
-    
+
     // Scattered clouds
     '03d': '☁️',
     '03n': '☁️',
-    
+
     // Broken clouds
     '04d': '☁️',
     '04n': '☁️',
-    
+
     // Shower rain
     '09d': '🌧️',
     '09n': '🌧️',
-    
+
     // Rain
     '10d': isDaytime ? '🌦️' : '🌧️',
     '10n': '🌧️',
-    
+
     // Thunderstorm
     '11d': '⛈️',
     '11n': '⛈️',
-    
+
     // Snow
     '13d': '❄️',
     '13n': '❄️',
-    
+
     // Mist/Fog
     '50d': '🌫️',
     '50n': '🌫️'
   };
-  
+
   return weatherIcons[iconCode] || (isDaytime ? '☀️' : '🌙');
 }
 
@@ -175,13 +175,72 @@ function setupKeyboardNavigation() {
     if (e.key === 'Escape') {
       closeAllModals();
     }
-    
+
     // Ctrl/Cmd + K to focus search
     if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
       e.preventDefault();
       document.getElementById('citySearch').focus();
     }
   });
+}
+
+// ============================================================================
+// NAVIGATION SETUP
+// ============================================================================
+
+// ============================================================================
+// MAP FUNCTIONALITY (LEAFLET.JS)
+let map;
+let marker;
+
+function initMap() {
+  // If map container is hidden or has no size, Leaflet will fail. 
+  // We try to init, but we rely on invalidateSize() being called later.
+
+  if (map) {
+    map.invalidateSize();
+    return;
+  }
+
+  try {
+    const mapElement = document.getElementById('mapCity');
+    if (!mapElement) return;
+
+    // Center on India (approx)
+    map = L.map('mapCity').setView([20.5937, 78.9629], 5);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Initial resize attempt
+    map.invalidateSize();
+  } catch (e) {
+    console.error("Map init failed", e);
+  }
+}
+
+function updateMapMarker(lat, lon, cityName) {
+  if (!map) {
+    initMap();
+    // If init failed (e.g. container hidden), try again later
+    if (!map) return;
+  }
+
+  try {
+    // Update marker
+    if (marker) {
+      marker.setLatLng([lat, lon]);
+    } else {
+      marker = L.marker([lat, lon]).addTo(map);
+    }
+
+    marker.bindPopup(`<b>${cityName}</b>`).openPopup();
+    map.setView([lat, lon], 6);
+    map.invalidateSize();
+  } catch (e) {
+    console.warn("Could not update map marker", e);
+  }
 }
 
 // ============================================================================
@@ -199,7 +258,7 @@ function setupNavigation() {
       navButtons.forEach(b => {
         b.classList.remove('active');
       });
-      
+
       // Add slight delay for smooth animation
       setTimeout(() => {
         btn.classList.add('active');
@@ -216,7 +275,15 @@ function setupNavigation() {
           break;
         case 'map':
           openModal('mapModal');
-          document.getElementById('mapCity').textContent = currentCity;
+          document.getElementById('mapCity').textContent = ''; // Clear fallback text
+
+          // Force multiple resize checks to catch transition end
+          initMap();
+          if (map) map.invalidateSize();
+
+          setTimeout(() => { if (map) map.invalidateSize(); }, 100);
+          setTimeout(() => { if (map) map.invalidateSize(); }, 300); // Typical transition time
+          setTimeout(() => { if (map) map.invalidateSize(); }, 500);
           break;
         case 'analytics':
           openModal('analyticsModal');
@@ -240,7 +307,7 @@ function openModal(modalId) {
     modal.classList.remove('hidden');
     // Prevent body scroll when modal is open
     document.body.style.overflow = 'hidden';
-    
+
     // Focus management for accessibility
     const firstFocusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
     if (firstFocusable) {
@@ -284,7 +351,7 @@ function setupCitySearch() {
 
   searchInput.addEventListener('input', (e) => {
     clearTimeout(searchTimeout);
-    
+
     // Debounce search for better performance
     searchTimeout = setTimeout(() => {
       const query = e.target.value.toLowerCase();
@@ -360,7 +427,7 @@ function loadCitiesList() {
       📍 ${city.name}
     </button>
   `).join('');
-  
+
   // Add click event listeners
   container.querySelectorAll('.city-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -378,12 +445,12 @@ function loadCitiesList() {
 
 async function loadWeatherDataWithTransition(city) {
   if (isLoading) return;
-  
+
   // Add loading state
   isLoading = true;
   const content = document.querySelector('.content');
   content.classList.add('loading');
-  
+
   try {
     await loadWeatherData(city);
   } finally {
@@ -406,6 +473,7 @@ async function loadWeatherData(city) {
     ]);
 
     // Update UI with smooth transitions
+    lastWeatherData = { current: currentWeather, forecast: forecastData }; // Store data
     await updateWeatherUISmooth(currentWeather, forecastData);
     updateHourlyForecast(forecastData.list.slice(0, 6));
     updateWeeklyForecast(forecastData.list);
@@ -442,19 +510,19 @@ async function updateWeatherUISmooth(data, forecastData = null) {
     document.getElementById('mainTemp'),
     document.getElementById('mainWeatherIcon')
   ];
-  
+
   elements.forEach(el => {
     el.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
     el.style.opacity = '0';
     el.style.transform = 'translateY(-10px)';
   });
-  
+
   // Wait for fade out
   await new Promise(resolve => setTimeout(resolve, 300));
-  
+
   // Update content
   updateWeatherUI(data, forecastData);
-  
+
   // Fade in new content
   setTimeout(() => {
     elements.forEach(el => {
@@ -474,14 +542,21 @@ function updateWeatherUI(data, forecastData = null) {
   document.getElementById('lastUpdated').textContent = `${timeString}, ${dateString}`;
 
   // Animated temperature update
-  animateValue('mainTemp', parseFloat(document.getElementById('mainTemp').textContent) || 0, 
-               Math.round(data.main.temp), 800, '°');
+  const tempVal = getTemperature(data.main.temp);
+  const tempSym = getTempUnitSymbol();
+  animateValue('mainTemp', parseFloat(document.getElementById('mainTemp').textContent) || 0,
+    tempVal, 800, tempSym);
+
+  // Update Map Marker
+  if (data.coord) {
+    updateMapMarker(data.coord.lat, data.coord.lon, data.name);
+  }
 
   const iconCode = data.weather[0]?.icon || '01d';
-  
+
   // ⭐ USE TIME-BASED ICON FUNCTION
   const newIcon = getWeatherIconByTime(iconCode);
-  
+
   // Smooth icon transition
   const iconElement = document.getElementById('mainWeatherIcon');
   iconElement.style.transform = 'scale(0.8) rotate(-10deg)';
@@ -492,8 +567,8 @@ function updateWeatherUI(data, forecastData = null) {
 
   // Details Grid with staggered animation
   const details = [
-    { id: 'feelsLike', value: `${Math.round(data.main.feels_like)}°` },
-    { id: 'windSpeed', value: `${(data.wind.speed * 3.6).toFixed(1)} km/h` },
+    { id: 'feelsLike', value: `${getTemperature(data.main.feels_like)}${getTempUnitSymbol()}` },
+    { id: 'windSpeed', value: getWindSpeed(data.wind.speed) },
     { id: 'humidity', value: `${data.main.humidity}%` },
     { id: 'clouds', value: `${data.clouds?.all || 0}%` },
     { id: 'pressure', value: `${data.main.pressure} hPa` }
@@ -521,7 +596,7 @@ function animateValue(id, start, end, duration, suffix = '') {
   const range = end - start;
   const increment = range / (duration / 16);
   let current = start;
-  
+
   const timer = setInterval(() => {
     current += increment;
     if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
@@ -542,7 +617,7 @@ function updateHourlyForecast(forecastList) {
     const displayHour = hours % 12 || 12;
 
     const iconCode = item.weather[0]?.icon || '01d';
-    
+
     // ⭐ USE TIME-BASED ICON FUNCTION
     const icon = getWeatherIconByTime(iconCode);
 
@@ -550,7 +625,7 @@ function updateHourlyForecast(forecastList) {
       <div class="hour-item" style="animation-delay: ${index * 0.1}s">
         <div class="hour-time">${displayHour} ${period}</div>
         <div class="hour-icon">${icon}</div>
-        <div class="hour-temp">${Math.round(item.main.temp)}°</div>
+        <div class="hour-temp">${getTemperature(item.main.temp)}°</div>
       </div>
     `;
   }).join('');
@@ -582,13 +657,13 @@ function updateWeeklyForecast(forecastList) {
       date.toLocaleDateString('en-US', { weekday: 'short' });
 
     const iconCode = data.weather[0]?.icon || '01d';
-    
+
     // ⭐ USE TIME-BASED ICON FUNCTION
     const icon = getWeatherIconByTime(iconCode);
     const condition = data.weather[0]?.main || 'Clear';
 
-    const tempHigh = Math.round(data.main.temp_max);
-    const tempLow = Math.round(data.main.temp_min);
+    const tempHigh = getTemperature(data.main.temp_max);
+    const tempLow = getTemperature(data.main.temp_min);
 
     return `
       <div class="day-item" style="animation-delay: ${index * 0.1}s">
@@ -726,6 +801,13 @@ if ('performance' in window) {
 // SETTINGS FUNCTIONS
 // ============================================================================
 
+// ============================================================================
+// SETTINGS & STATE MANAGEMENT
+// ============================================================================
+
+let lastWeatherData = { current: null, forecast: null };
+let autoRefreshInterval = null;
+
 function saveSettings() {
   const settings = {
     darkMode: document.getElementById('darkMode').checked,
@@ -737,12 +819,12 @@ function saveSettings() {
   };
 
   localStorage.setItem('weatherDashboardSettings', JSON.stringify(settings));
-  
+
   // Apply settings
   applySettings(settings);
-  
+
   showNotification('✅ Settings saved successfully!', 'success');
-  
+
   // Close modal after a short delay
   setTimeout(() => {
     closeAllModals();
@@ -759,7 +841,7 @@ function resetSettings() {
       weatherAlerts: false,
       autoRefresh: true
     };
-    
+
     localStorage.setItem('weatherDashboardSettings', JSON.stringify(defaultSettings));
     loadSettingsUI();
     applySettings(defaultSettings);
@@ -769,37 +851,107 @@ function resetSettings() {
 
 function loadSettingsUI() {
   const saved = localStorage.getItem('weatherDashboardSettings');
-  
+  let settings = {
+    darkMode: true,
+    animations: true,
+    tempUnit: 'metric',
+    windUnit: 'kmh',
+    weatherAlerts: false,
+    autoRefresh: true
+  };
+
   if (saved) {
-    const settings = JSON.parse(saved);
-    document.getElementById('darkMode').checked = settings.darkMode;
-    document.getElementById('animations').checked = settings.animations;
-    document.getElementById('tempUnit').value = settings.tempUnit;
-    document.getElementById('windUnit').value = settings.windUnit;
-    document.getElementById('weatherAlerts').checked = settings.weatherAlerts;
-    document.getElementById('autoRefresh').checked = settings.autoRefresh;
-    
-    applySettings(settings);
+    settings = { ...settings, ...JSON.parse(saved) };
   }
+
+  // Update UI Elements
+  document.getElementById('darkMode').checked = settings.darkMode;
+  document.getElementById('animations').checked = settings.animations;
+  document.getElementById('tempUnit').value = settings.tempUnit;
+  document.getElementById('windUnit').value = settings.windUnit;
+  document.getElementById('weatherAlerts').checked = settings.weatherAlerts;
+  document.getElementById('autoRefresh').checked = settings.autoRefresh;
+
+  applySettings(settings);
 }
 
 function applySettings(settings) {
+  window.weatherSettings = settings;
+
   // Apply dark mode
   if (!settings.darkMode) {
     document.body.classList.add('light-mode');
   } else {
     document.body.classList.remove('light-mode');
   }
-  
+
   // Apply animations
   if (!settings.animations) {
     document.body.classList.add('reduced-motion');
   } else {
     document.body.classList.remove('reduced-motion');
   }
-  
-  // Store for API calls
-  window.weatherSettings = settings;
+
+  // Handle Auto Refresh
+  if (settings.autoRefresh) {
+    startAutoRefresh();
+  } else {
+    stopAutoRefresh();
+  }
+
+  // Re-render UI if data exists to reflect Unit changes
+  if (lastWeatherData.current && lastWeatherData.forecast) {
+    updateWeatherUI(lastWeatherData.current, lastWeatherData.forecast);
+    updateHourlyForecast(lastWeatherData.forecast.list.slice(0, 6));
+    updateWeeklyForecast(lastWeatherData.forecast.list);
+  }
+}
+
+function startAutoRefresh() {
+  stopAutoRefresh(); // Clear existing to avoid duplicates
+  // Refresh every 5 minutes (300000 ms)
+  autoRefreshInterval = setInterval(() => {
+    if (currentCity) {
+      console.log('🔄 Auto-refreshing weather data...');
+      loadWeatherData(currentCity);
+    }
+  }, 300000);
+}
+
+function stopAutoRefresh() {
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval);
+    autoRefreshInterval = null;
+  }
+}
+
+// ============================================================================
+// UNIT CONVERSION HELPERS
+// ============================================================================
+
+function getTemperature(celsius) {
+  const unit = window.weatherSettings?.tempUnit || 'metric';
+  if (unit === 'imperial') {
+    return Math.round((celsius * 9 / 5) + 32);
+  }
+  return Math.round(celsius);
+}
+
+function getTempUnitSymbol() {
+  return window.weatherSettings?.tempUnit === 'imperial' ? '°F' : '°';
+}
+
+function getWindSpeed(speedMs) {
+  const unit = window.weatherSettings?.windUnit || 'kmh';
+  switch (unit) {
+    case 'imperial': // mph
+      return (speedMs * 2.237).toFixed(1) + ' mph';
+    case 'ms': // m/s
+      return speedMs.toFixed(1) + ' m/s';
+    case 'kmh': // km/h (default)
+    default:
+      return (speedMs * 3.6).toFixed(1) + ' km/h';
+  }
 }
 
 // Make functions globally available

@@ -543,39 +543,70 @@ async function loadWeatherByCoords(lat, lon) {
 function initMap() {
   if (map) return;
 
-  // Initialize map centered on India
-  map = L.map('weatherMap').setView([22.5937, 78.9629], 5);
+  const mapContainer = document.getElementById('weatherMap');
+  if (!mapContainer || mapContainer.offsetHeight === 0) {
+    console.warn("⚠️ Map container not ready or hidden. Deferring init.");
+    return;
+  }
 
-  // Dark theme tiles (CartoDB Dark Matter)
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    subdomains: 'abcd',
-    maxZoom: 20
-  }).addTo(map);
+  try {
+    // Initialize map centered on India
+    map = L.map('weatherMap').setView([22.5937, 78.9629], 5);
 
-  // Map Click Listener
-  map.on('click', function (e) {
-    const { lat, lng } = e.latlng;
-    updateMapMarker(lat, lng, "Selected Location");
-    loadWeatherByCoords(lat, lng);
-  });
+    // Dark theme tiles (CartoDB Dark Matter)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 20
+    }).addTo(map);
+
+    // Map Click Listener
+    map.on('click', function (e) {
+      const { lat, lng } = e.latlng;
+      updateMapMarker(lat, lng, "Selected Location");
+      loadWeatherByCoords(lat, lng);
+    });
+
+    console.log("✅ Leaflet Map Initialized Successfully");
+  } catch (e) {
+    console.error("❌ Leaflet Initialization Failed:", e);
+  }
 }
 
 function updateMapMarker(lat, lon, cityName = "Your Location") {
   if (!map) initMap();
 
+  // ⭐ Bulletproof validation for NaN, null, or undefined coordinates
+  const validLat = typeof lat === 'number' ? lat : parseFloat(lat);
+  const validLon = typeof lon === 'number' ? lon : parseFloat(lon);
+
+  if (!Number.isFinite(validLat) || !Number.isFinite(validLon)) {
+    console.warn("⚠️ Skipping map update: Invalid coordinates detected", { lat, lon });
+    console.trace(); // Trace the caller to find source of NaN
+    return;
+  }
+
+  // Use the validated coordinates from here on
+  const coords = [validLat, validLon];
+
   if (marker) {
-    marker.setLatLng([lat, lon]);
+    marker.setLatLng(coords);
     marker.bindPopup(`<b>Weather of ${cityName}</b>`).openPopup();
   } else {
-    marker = L.marker([lat, lon]).addTo(map)
+    marker = L.marker(coords).addTo(map)
       .bindPopup(`<b>Weather of ${cityName}</b>`).openPopup();
   }
 
-  // Soft flyTo effect for city searches
-  map.flyTo([lat, lon], map.getZoom() > 7 ? map.getZoom() : 7, {
-    duration: 1.5
-  });
+  // Soft flyTo effect for city searches - ONLY if map is visible
+  if (map && map.getContainer().offsetParent !== null) {
+    try {
+      map.flyTo(coords, map.getZoom() > 7 ? map.getZoom() : 7, {
+        duration: 1.5
+      });
+    } catch (e) {
+      console.warn("flyTo failed:", e);
+    }
+  }
 
   // Ensure map tiles are loaded if container was hidden
   setTimeout(() => {
@@ -629,7 +660,12 @@ function updateWeatherUI(data, forecastData = null) {
     // ⭐ Map Marker (Safe)
     try {
       if (data.coord && typeof L !== 'undefined') {
-        updateMapMarker(data.coord.lat, data.coord.lon, data.name);
+        // Double check internal coordinates
+        const lat = parseFloat(data.coord.lat);
+        const lon = parseFloat(data.coord.lon);
+        if (Number.isFinite(lat) && Number.isFinite(lon)) {
+          updateMapMarker(lat, lon, data.name);
+        }
       }
     } catch (e) { console.warn("Map update failed", e); }
 
@@ -1013,7 +1049,7 @@ function applySettings(settings) {
   }
 
   // Re-render UI if data exists to reflect Unit changes
-  if (lastWeatherData.current && lastWeatherData.forecast) {
+  if (lastWeatherData && lastWeatherData.current && lastWeatherData.forecast) {
     updateWeatherUI(lastWeatherData.current, lastWeatherData.forecast);
     updateHourlyForecast(lastWeatherData.forecast.list.slice(0, 6));
     updateWeeklyForecast(lastWeatherData.forecast.list);

@@ -312,15 +312,6 @@ function setupNavigation() {
           break;
         case 'map':
           openModal('mapModal');
-          document.getElementById('mapCity').textContent = ''; // Clear fallback text
-
-          // Force multiple resize checks to catch transition end
-          initMap();
-          if (map) map.invalidateSize();
-
-          setTimeout(() => { if (map) map.invalidateSize(); }, 100);
-          setTimeout(() => { if (map) map.invalidateSize(); }, 300); // Typical transition time
-          setTimeout(() => { if (map) map.invalidateSize(); }, 500);
           break;
         case 'analytics':
           openModal('analyticsModal');
@@ -545,13 +536,15 @@ async function updateWeatherUISmooth(data, forecastData = null) {
   const elements = [
     document.getElementById('cityName'),
     document.getElementById('mainTemp'),
-    document.getElementById('mainWeatherIcon')
+    document.querySelector('.weather-visual-container') // Target container instead of icon
   ];
 
   elements.forEach(el => {
-    el.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-    el.style.opacity = '0';
-    el.style.transform = 'translateY(-10px)';
+    if (el) {
+      el.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(-10px)';
+    }
   });
 
   // Wait for fade out
@@ -563,11 +556,110 @@ async function updateWeatherUISmooth(data, forecastData = null) {
   // Fade in new content
   setTimeout(() => {
     elements.forEach(el => {
-      el.style.opacity = '1';
-      el.style.transform = 'translateY(0)';
+      if (el) {
+        el.style.opacity = '1';
+        el.style.transform = 'translateY(0)';
+      }
     });
   }, 50);
 }
+
+// ============================================================================
+// STATIC MAP & PINNING LOGIC
+// ============================================================================
+
+async function loadWeatherByCoords(lat, lon) {
+  if (isLoading) return;
+  isLoading = true;
+  const content = document.querySelector('.content');
+  content.classList.add('loading');
+
+  try {
+    const url = `${WEATHER_API_URL}/weather?lat=${lat}&lon=${lon}&appid=${WEATHER_API_KEY}&units=metric`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Could not find city at this location");
+    const data = await response.json();
+
+    // Use existing city name load logic to get forecast too
+    await loadWeatherData(data.name);
+    showNotification(`📍 Location set to ${data.name}`);
+  } catch (error) {
+    console.error("Map click error:", error);
+    showNotification("No city found at this location. Try another spot.", "error");
+  } finally {
+    content.classList.remove('loading');
+    isLoading = false;
+  }
+}
+
+function updateStaticMapPin(lat, lon, cityName = "Your Location") {
+  const pin = document.getElementById('cityPin');
+  const tooltip = document.getElementById('pinTooltip');
+  if (!pin) return;
+
+  if (tooltip) {
+    tooltip.textContent = `Weather of ${cityName}`;
+  }
+
+  // INDIA Bounding Box (Approximate for the provided map image)
+  const bounds = {
+    north: 37.5,
+    south: 7.0,
+    west: 67.0,
+    east: 98.0
+  };
+
+  const latRange = bounds.north - bounds.south;
+  const lonRange = bounds.east - bounds.west;
+
+  let topPos = ((bounds.north - lat) / latRange) * 100;
+  let leftPos = ((lon - bounds.west) / lonRange) * 100;
+
+  topPos = Math.max(5, Math.min(95, topPos));
+  leftPos = Math.max(5, Math.min(95, leftPos));
+
+  pin.style.top = `${topPos}%`;
+  pin.style.left = `${leftPos}%`;
+  pin.style.opacity = '1';
+}
+
+function setupMapInteractivity() {
+  const mapImg = document.querySelector('.static-map-img');
+  if (!mapImg) return;
+
+  mapImg.addEventListener('click', (e) => {
+    const rect = mapImg.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Bounding Box
+    const bounds = {
+      north: 37.5,
+      south: 7.0,
+      west: 67.0,
+      east: 98.0
+    };
+
+    const latRange = bounds.north - bounds.south;
+    const lonRange = bounds.east - bounds.west;
+
+    // Calculate lat/lon based on percentage of image dimensions
+    const lat = bounds.north - (y / rect.height) * latRange;
+    const lon = bounds.west + (x / rect.width) * lonRange;
+
+    // Immediate visual feedback: move pin
+    updateStaticMapPin(lat, lon, "Searching...");
+
+    // Fetch weather
+    loadWeatherByCoords(lat, lon);
+  });
+}
+
+// Call on load
+document.addEventListener('DOMContentLoaded', () => {
+  // ... existing init code ...
+  setupMapInteractivity();
+});
 
 function updateWeatherUI(data, forecastData = null) {
   document.getElementById('cityName').textContent = data.name;
@@ -584,23 +676,26 @@ function updateWeatherUI(data, forecastData = null) {
   animateValue('mainTemp', parseFloat(document.getElementById('mainTemp').textContent) || 0,
     tempVal, 800, tempSym);
 
-  // Update Map Marker
+  // ⭐ UPDATE STATIC MAP PIN
   if (data.coord) {
-    updateMapMarker(data.coord.lat, data.coord.lon, data.name);
+    updateStaticMapPin(data.coord.lat, data.coord.lon, data.name);
   }
 
-  const iconCode = data.weather[0]?.icon || '01d';
+  // ⭐ UPDATE CELESTIAL BODY (SUN/MOON)
+  const hour = new Date().getHours();
+  const isDaytime = hour >= 6 && hour < 18;
+  // ... (rest of function)
+  const celestialBody = document.getElementById('celestialBody');
 
-  // ⭐ USE TIME-BASED ICON FUNCTION
-  const newIcon = getWeatherIconByTime(iconCode);
-
-  // Smooth icon transition
-  const iconElement = document.getElementById('mainWeatherIcon');
-  iconElement.style.transform = 'scale(0.8) rotate(-10deg)';
-  setTimeout(() => {
-    iconElement.textContent = newIcon;
-    iconElement.style.transform = 'scale(1) rotate(0deg)';
-  }, 200);
+  if (celestialBody) {
+    if (isDaytime) {
+      celestialBody.classList.add('sun');
+      celestialBody.classList.remove('moon');
+    } else {
+      celestialBody.classList.add('moon');
+      celestialBody.classList.remove('sun');
+    }
+  }
 
   // Details Grid with staggered animation
   const details = [

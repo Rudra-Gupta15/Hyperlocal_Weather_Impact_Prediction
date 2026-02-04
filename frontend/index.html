@@ -9,9 +9,6 @@
   <meta name="theme-color" content="#1a2332" />
   <title>Weather ML Dashboard - Rudra Kumar Gupta</title>
   <link rel="stylesheet" href="style.css" />
-  <!-- Leaflet Map (Local) -->
-  <link rel="stylesheet" href="lib/leaflet.css" />
-  <script src="lib/leaflet.js"></script>
 </head>
 
 <body>
@@ -39,7 +36,7 @@
         <button class="nav-btn" data-view="map" title="Map">
           <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
             <path
-              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z" />
+              d="M20.5 3l-6 2.25L8.5 3 3.5 4.88v15.24l6-2.25 6 2.25 5-1.88V3zM15 19l-6-2.25v-9l6 2.25V19zM5 18.24V5.48l3.5-1.31v12.79L5 18.24zM19 18.52l-3.5-1.31v-12.8L19 5.76v12.76z" />
           </svg>
         </button>
         <button class="nav-btn" data-view="analytics" title="Analytics">
@@ -74,7 +71,14 @@
         </div>
 
         <div class="hero-center">
-          <div id="mainWeatherIcon" class="large-icon">☀️</div>
+          <div class="weather-visual-container">
+            <div id="celestialBody" class="celestial-body sun"></div>
+            <div class="cloud-layer">
+              <div class="cloud cloud-1"></div>
+              <div class="cloud cloud-2"></div>
+              <div class="cloud cloud-3"></div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -171,10 +175,17 @@
       </div>
     </div>
     <div id="mapModal" class="modal hidden">
-      <div class="modal-content">
+      <div class="modal-content modal-large">
         <button class="modal-close">&times;</button>
         <h2>Weather Map</h2>
-        <div id="mapCity"></div>
+        <div class="static-map-container">
+          <div class="static-map-wrapper">
+            <img src="india_map.png" alt="India Map" class="static-map-img">
+            <div id="cityPin" class="city-pin">
+              <span id="pinTooltip" class="pin-tooltip">Loading...</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <div id="analyticsModal" class="modal hidden">
@@ -185,8 +196,8 @@
         <div class="analytics-grid">
           <div class="analytics-card">
             <h4>🎯 Model Performance</h4>
-            <div id="modelPerformanceChart" class="chart-container">
-              <canvas id="performanceChart"></canvas>
+            <div class="model-performance-container">
+              <img src="model_comparison.png" alt="Model Performance Comparison" class="analytics-img">
             </div>
           </div>
 

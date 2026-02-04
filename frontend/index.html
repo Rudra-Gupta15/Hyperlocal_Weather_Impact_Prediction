@@ -8,6 +8,9 @@
     content="Weather ML Dashboard - Live weather data with AI-powered predictions. Created by Rudra Kumar Gupta" />
   <meta name="theme-color" content="#1a2332" />
   <title>Weather ML Dashboard - Rudra Kumar Gupta</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <link rel="stylesheet" href="style.css" />
 </head>
 
@@ -52,118 +55,166 @@
           </svg>
         </button>
       </nav>
+
+      <div class="sidebar-wisdom">
+        <div class="wisdom-icon">💡</div>
+        <p id="weatherTip">Stay hydrated! Heat levels are rising today.</p>
+      </div>
     </aside>
 
     <!-- Main Content -->
     <main class="content">
-      <div class="search-container">
-        <input type="text" id="citySearch" class="search-input" placeholder="Search for cities..." />
-        <div id="cityDropdown" class="city-dropdown hidden"></div>
-      </div>
+      <!-- Search Section -->
+      <header class="dashboard-header">
+        <div class="search-bar">
+          <i class="fas fa-search"></i>
+          <input type="text" id="citySearch" class="search-input" placeholder="Search for cities..." autocomplete="off">
+          <div id="cityDropdown" class="city-dropdown hidden"></div>
+        </div>
+      </header>
 
-      <section class="weather-hero">
-        <div class="hero-left">
-          <h1 id="cityName">Madrid</h1>
-          <p id="lastUpdated" class="timestamp"></p>
-          <div class="temp-display">
-            <h2 id="mainTemp">31°</h2>
+      <!-- Layout Grid -->
+      <div class="dashboard-grid">
+
+        <!-- Column 1: Hero & Forecast -->
+        <div class="grid-col main-col">
+          <section class="weather-hero">
+            <div class="hero-header">
+              <span class="label">WEATHER</span>
+              <h1 id="cityName">Nagpur</h1>
+              <p id="lastUpdated" class="timestamp"></p>
+            </div>
+            <div class="hero-body">
+              <div class="temp-display">
+                <h2 id="mainTemp">--°</h2>
+              </div>
+              <div class="weather-visual-container">
+                <div id="celestialBody" class="celestial-body sun"></div>
+                <div class="cloud-layer">
+                  <div class="cloud cloud-1"></div>
+                  <div class="cloud cloud-2"></div>
+                  <div class="cloud cloud-3"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Today's Hourly Forecast -->
+          <div class="tile-card forecast-tile">
+            <h3>TODAY'S FORECAST</h3>
+            <div id="hourlyForecast" class="hourly-forecast"></div>
           </div>
         </div>
 
-        <div class="hero-center">
-          <div class="weather-visual-container">
-            <div id="celestialBody" class="celestial-body sun"></div>
-            <div class="cloud-layer">
-              <div class="cloud cloud-1"></div>
-              <div class="cloud cloud-2"></div>
-              <div class="cloud cloud-3"></div>
+        <!-- Column 2: Details & Metrics -->
+        <div class="grid-col details-col">
+          <!-- Air Conditions Grid -->
+          <div class="tile-card conditions-tile">
+            <h3>AIR CONDITIONS</h3>
+            <div class="conditions-grid-new">
+              <div class="condition-item">
+                <i class="fas fa-temperature-high"></i>
+                <div class="condition-info">
+                  <p class="label">Real Feel</p>
+                  <p id="feelsLike" class="value">--°</p>
+                </div>
+              </div>
+              <div class="condition-item">
+                <i class="fas fa-wind"></i>
+                <div class="condition-info">
+                  <p class="label">Wind</p>
+                  <p id="windSpeed" class="value">-- km/h</p>
+                </div>
+              </div>
+              <div class="condition-item">
+                <i class="fas fa-tint"></i>
+                <div class="condition-info">
+                  <p class="label">Humidity</p>
+                  <p id="humidity" class="value">--%</p>
+                </div>
+              </div>
+              <div class="condition-item">
+                <i class="fas fa-cloud-rain"></i>
+                <div class="condition-info">
+                  <p class="label">Rain Chance</p>
+                  <p id="rainChance" class="value">0%</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Environment Metrics -->
+          <div class="tile-card environment-tile">
+            <h3>ENVIRONMENT</h3>
+            <div class="env-grid-new">
+              <div class="env-item">
+                <span class="env-icon"><i class="fas fa-eye"></i></span>
+                <div class="env-data">
+                  <p class="env-label">Visibility</p>
+                  <p id="visibility" class="env-value">-- km</p>
+                </div>
+              </div>
+              <div class="env-item">
+                <span class="env-icon"><i class="fas fa-sun"></i></span>
+                <div class="env-data">
+                  <p class="env-label">Sunrise</p>
+                  <p id="sunrise" class="env-value">--:-- AM</p>
+                </div>
+              </div>
+              <div class="env-item">
+                <span class="env-icon"><i class="fas fa-moon"></i></span>
+                <div class="env-data">
+                  <p class="env-label">Sunset</p>
+                  <p id="sunset" class="env-value">--:-- PM</p>
+                </div>
+              </div>
+              <div class="env-item">
+                <span class="env-icon"><i class="fas fa-cloud"></i></span>
+                <div class="env-data">
+                  <p class="env-label">Clouds</p>
+                  <p id="clouds" class="env-value">--%</p>
+                </div>
+              </div>
+              <div class="env-item">
+                <span class="env-icon"><i class="fas fa-compress-alt"></i></span>
+                <div class="env-data">
+                  <p class="env-label">Pressure</p>
+                  <p id="pressure" class="env-value">-- hPa</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </section>
 
-      <!-- Today's Forecast -->
-      <div class="forecast-card">
-        <h3>TODAY'S FORECAST</h3>
-        <div id="hourlyForecast" class="hourly-forecast"></div>
-      </div>
+        <!-- Column 3: 7-Day & Map -->
+        <div class="grid-col sidebar-col">
+          <div class="tile-card weekly-tile">
+            <h3>7-DAY FORECAST</h3>
+            <div id="weeklyForecast" class="weekly-list"></div>
+          </div>
 
-      <!-- Air Conditions -->
-      <div class="air-conditions-card">
-        <h3>AIR CONDITIONS</h3>
-        <div class="conditions-grid">
-          <div class="condition-item">
-            <div class="condition-icon">🌡️</div>
-            <div class="condition-data">
-              <p class="condition-label">Real Feel</p>
-              <p id="feelsLike" class="condition-value">30°</p>
-            </div>
-          </div>
-          <div class="condition-item">
-            <div class="condition-icon">💨</div>
-            <div class="condition-data">
-              <p class="condition-label">Wind</p>
-              <p id="windSpeed" class="condition-value">0.8 km/h</p>
-            </div>
-          </div>
-          <div class="condition-item">
-            <div class="condition-icon">💧</div>
-            <div class="condition-data">
-              <p class="condition-label">Humidity</p>
-              <p id="humidity" class="condition-value">--%</p>
-            </div>
-          </div>
-          <div class="condition-item">
-            <div class="condition-icon">🌧️</div>
-            <div class="condition-data">
-              <p class="condition-label">Chance of rain</p>
-              <p id="rainChance" class="condition-value">0%</p>
-            </div>
-          </div>
-          <div class="condition-item">
-            <div class="condition-icon">☁️</div>
-            <div class="condition-data">
-              <p class="condition-label">Clouds</p>
-              <p id="clouds" class="condition-value">--%</p>
-            </div>
-          </div>
-          <div class="condition-item">
-            <div class="condition-icon">📉</div>
-            <div class="condition-data">
-              <p class="condition-label">Pressure</p>
-              <p id="pressure" class="condition-value">-- hPa</p>
+          <div class="tile-card map-tile">
+            <h3>WEATHER RADAR</h3>
+            <div class="mini-map-container" onclick="openModal('mapModal')">
+              <p>📍 View Interactive Map</p>
+              <div class="map-preview-hint">Click to expand radar</div>
             </div>
           </div>
         </div>
+
       </div>
 
-      <!-- Right Sidebar Forecast (Inside Grid) -->
-      <div class="week-forecast">
-        <h3>7-DAY FORECAST</h3>
-        <div id="weeklyForecast" class="weekly-list"></div>
-      </div>
-
-      <!-- ML Performance -->
-      <div class="models-card">
+      <!-- Bottom Section: ML Models -->
+      <div class="tile-card models-tile">
         <h3>📊 ML MODELS PERFORMANCE</h3>
         <div id="modelCards" class="model-cards"></div>
       </div>
 
-      <!-- Analytics Overview -->
-      <div class="graph-card">
-        <h3>📈 ANALYTICS OVERVIEW</h3>
-        <div class="graph-container">
-          <img src="model_comparison.png" alt="Model Predictions vs Actual"
-            style="width: 100%; border-radius: 16px; transition: transform 0.5s ease;"
-            onerror="this.style.display='none'; this.parentElement.innerHTML='<p style=\'text-align:center; color:var(--text-secondary); padding:40px;\'>📊 Analytics chart not found<br><small>Place image at: frontend/model_comparison.png</small></p>';" />
-        </div>
-      </div>
-
-      <div class="footer-credit">
+      <footer class="footer-credit">
         <p>Created by <strong>Rudra Kumar Gupta</strong> |
           <a href="https://rudra-portfolio-liart.vercel.app/" target="_blank" rel="noopener noreferrer">Portfolio</a>
         </p>
-      </div>
+      </footer>
     </main>
 
     <!-- Modals -->
@@ -178,13 +229,8 @@
       <div class="modal-content modal-large">
         <button class="modal-close">&times;</button>
         <h2>Weather Map</h2>
-        <div class="static-map-container">
-          <div class="static-map-wrapper">
-            <img src="india_map.png" alt="India Map" class="static-map-img">
-            <div id="cityPin" class="city-pin">
-              <span id="pinTooltip" class="pin-tooltip">Loading...</span>
-            </div>
-          </div>
+        <div class="map-container">
+          <div id="weatherMap"></div>
         </div>
       </div>
     </div>
@@ -388,6 +434,8 @@
     </div>
   </div>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="script.js"></script>
 </body>
 

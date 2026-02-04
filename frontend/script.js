@@ -70,6 +70,10 @@ const INDIAN_CITIES = [
 
 let currentCity = 'Nagpur';
 let isLoading = false;
+let lastWeatherData = null;
+let autoRefreshInterval = null;
+let map;
+let marker;
 
 // ============================================================================
 // TIME-BASED WEATHER ICON FUNCTION (NEW!)
@@ -188,97 +192,6 @@ function setupKeyboardNavigation() {
 // NAVIGATION SETUP
 // ============================================================================
 
-// ============================================================================
-// MAP FUNCTIONALITY (LEAFLET.JS)
-// ============================================================================
-
-let map;
-let marker;
-
-function initMap() {
-  const mapEl = document.getElementById('mapCity');
-  if (!mapEl) return;
-
-  // Visual Debugging: Clear previous content if it was an error
-  // mapEl.innerHTML = ''; 
-
-  if (map) {
-    try { map.invalidateSize(); } catch (e) {/* ignore */ }
-    return;
-  }
-
-  // 1. Check Library
-  if (typeof L === 'undefined') {
-    mapEl.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#333;text-align:center;padding:10px;">
-      <h3 style="color:#d9534f">Map Library Error</h3>
-      <p>Leaflet.js could not be loaded.</p>
-      <p style="font-size:12px;opacity:0.8">Check 'frontend/lib/leaflet.js' exists.</p>
-    </div>`;
-    return;
-  }
-
-  try {
-    // 2. Initialize Map
-    // Ensure container is empty before initializing to prevent "Map container is already initialized" error
-    if (mapEl._leaflet_id) {
-      mapEl.innerHTML = ''; // Hard reset if needed, though hazardous
-      // better to just try getting the map instance if we could.
-      // For now, let's assume if map variable is null, we can init.
-    }
-
-    map = L.map('mapCity', {
-      zoomControl: true, // Explicitly enable controls
-      attributionControl: false // Cleaner look
-    }).setView([20.5937, 78.9629], 5);
-
-    // 3. Add Tile Layer (OpenStreetMap)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
-    }).addTo(map);
-
-    // 4. Force Resize via ResizeObserver (Robust for Modals)
-    const resizeObserver = new ResizeObserver(() => {
-      if (map) map.invalidateSize();
-    });
-    resizeObserver.observe(mapEl);
-
-    // Initial resize attempts
-    setTimeout(() => { map.invalidateSize(); }, 100);
-    setTimeout(() => { map.invalidateSize(); }, 500);
-
-  } catch (e) {
-    console.error("Map Logic Error:", e);
-    mapEl.style.background = '#ffe6e6';
-    mapEl.innerHTML = `<div style="padding:20px;color:#cc0000;text-align:center;">
-      <strong>Map Error:</strong><br>${e.message}
-    </div>`;
-  }
-}
-
-function updateMapMarker(lat, lon, cityName) {
-  if (!map) {
-    initMap();
-    if (!map) return; // Still failed
-  }
-
-  try {
-    // Update marker
-    if (marker) {
-      marker.setLatLng([lat, lon]);
-    } else {
-      marker = L.marker([lat, lon]).addTo(map);
-    }
-
-    // Explicitly open popup
-    marker.bindPopup(`<b>${cityName}</b>`).openPopup();
-
-    // Pan and refresh
-    map.setView([lat, lon], 6);
-    map.invalidateSize();
-  } catch (e) {
-    console.warn("Marker update skipped:", e);
-  }
-}
 
 // ============================================================================
 // NAVIGATION SETUP
@@ -495,18 +408,29 @@ async function loadWeatherData(city) {
     console.log(`🔄 Loading weather for ${city}...`);
 
     // Get both Current and Forecast for complete data
-    const [currentWeather, forecastData] = await Promise.all([
-      fetchCurrentWeather(city),
-      fetchForecastData(city)
-    ]);
+    let currentWeather, forecastData;
+    try {
+      [currentWeather, forecastData] = await Promise.all([
+        fetchCurrentWeather(city),
+        fetchForecastData(city).catch(e => {
+          console.warn("Forecast fetch failed, using current weather only");
+          return null;
+        })
+      ]);
+    } catch (e) {
+      throw new Error(`Critical weather data missing: ${e.message}`);
+    }
 
     // Update UI with smooth transitions
     lastWeatherData = { current: currentWeather, forecast: forecastData }; // Store data
     await updateWeatherUISmooth(currentWeather, forecastData);
-    updateHourlyForecast(forecastData.list.slice(0, 6));
-    updateWeeklyForecast(forecastData.list);
 
-    console.log('✅ Weather data loaded successfully!');
+    if (forecastData) {
+      updateHourlyForecast(forecastData.list.slice(0, 6));
+      updateWeeklyForecast(forecastData.list);
+    }
+
+    console.log('✅ Weather data process finished');
   } catch (error) {
     console.error('❌ Error loading weather:', error);
     showNotification(`Could not load weather for ${city}. Please try another city.`, 'error');
@@ -514,17 +438,34 @@ async function loadWeatherData(city) {
 }
 
 async function fetchCurrentWeather(city) {
-  const url = `${WEATHER_API_URL}/weather?q=${city},IN&appid=${WEATHER_API_KEY}&units=metric`;
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`Weather API error: ${response.status}`);
-  return await response.json();
+  // Try with ,IN first for accuracy, then fallback to global search
+  try {
+    const url = `${WEATHER_API_URL}/weather?q=${city},IN&appid=${WEATHER_API_KEY}&units=metric`;
+    const response = await fetch(url);
+    if (response.ok) return await response.json();
+  } catch (e) {
+    console.warn("India-specific search failed, trying global...");
+  }
+
+  const globalUrl = `${WEATHER_API_URL}/weather?q=${city}&appid=${WEATHER_API_KEY}&units=metric`;
+  const globalResponse = await fetch(globalUrl);
+  if (!globalResponse.ok) throw new Error(`City not found: ${city}`);
+  return await globalResponse.json();
 }
 
 async function fetchForecastData(city) {
-  const url = `${WEATHER_API_URL}/forecast?q=${city},IN&appid=${WEATHER_API_KEY}&units=metric`;
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`Forecast API error: ${response.status}`);
-  return await response.json();
+  try {
+    const url = `${WEATHER_API_URL}/forecast?q=${city},IN&appid=${WEATHER_API_KEY}&units=metric`;
+    const response = await fetch(url);
+    if (response.ok) return await response.json();
+  } catch (e) {
+    console.warn("India-specific forecast failed, trying global...");
+  }
+
+  const globalUrl = `${WEATHER_API_URL}/forecast?q=${city}&appid=${WEATHER_API_KEY}&units=metric`;
+  const globalResponse = await fetch(globalUrl);
+  if (!globalResponse.ok) throw new Error(`Forecast data missing for: ${city}`);
+  return await globalResponse.json();
 }
 
 // ============================================================================
@@ -592,134 +533,175 @@ async function loadWeatherByCoords(lat, lon) {
   }
 }
 
-function updateStaticMapPin(lat, lon, cityName = "Your Location") {
-  const pin = document.getElementById('cityPin');
-  const tooltip = document.getElementById('pinTooltip');
-  if (!pin) return;
+// ============================================================================
+// INTERACTIVE MAP (LEAFLET)
+// ============================================================================
 
-  if (tooltip) {
-    tooltip.textContent = `Weather of ${cityName}`;
-  }
+// INTERACTIVE MAP (LEAFLET)
+// ============================================================================
 
-  // INDIA Bounding Box (Approximate for the provided map image)
-  const bounds = {
-    north: 37.5,
-    south: 7.0,
-    west: 67.0,
-    east: 98.0
-  };
+function initMap() {
+  if (map) return;
 
-  const latRange = bounds.north - bounds.south;
-  const lonRange = bounds.east - bounds.west;
+  // Initialize map centered on India
+  map = L.map('weatherMap').setView([22.5937, 78.9629], 5);
 
-  let topPos = ((bounds.north - lat) / latRange) * 100;
-  let leftPos = ((lon - bounds.west) / lonRange) * 100;
+  // Dark theme tiles (CartoDB Dark Matter)
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 20
+  }).addTo(map);
 
-  topPos = Math.max(5, Math.min(95, topPos));
-  leftPos = Math.max(5, Math.min(95, leftPos));
-
-  pin.style.top = `${topPos}%`;
-  pin.style.left = `${leftPos}%`;
-  pin.style.opacity = '1';
-}
-
-function setupMapInteractivity() {
-  const mapImg = document.querySelector('.static-map-img');
-  if (!mapImg) return;
-
-  mapImg.addEventListener('click', (e) => {
-    const rect = mapImg.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    // Bounding Box
-    const bounds = {
-      north: 37.5,
-      south: 7.0,
-      west: 67.0,
-      east: 98.0
-    };
-
-    const latRange = bounds.north - bounds.south;
-    const lonRange = bounds.east - bounds.west;
-
-    // Calculate lat/lon based on percentage of image dimensions
-    const lat = bounds.north - (y / rect.height) * latRange;
-    const lon = bounds.west + (x / rect.width) * lonRange;
-
-    // Immediate visual feedback: move pin
-    updateStaticMapPin(lat, lon, "Searching...");
-
-    // Fetch weather
-    loadWeatherByCoords(lat, lon);
+  // Map Click Listener
+  map.on('click', function (e) {
+    const { lat, lng } = e.latlng;
+    updateMapMarker(lat, lng, "Selected Location");
+    loadWeatherByCoords(lat, lng);
   });
 }
 
-// Call on load
-document.addEventListener('DOMContentLoaded', () => {
-  // ... existing init code ...
-  setupMapInteractivity();
-});
+function updateMapMarker(lat, lon, cityName = "Your Location") {
+  if (!map) initMap();
 
-function updateWeatherUI(data, forecastData = null) {
-  document.getElementById('cityName').textContent = data.name;
-
-  // Set Timestamp with smooth formatting
-  const now = new Date();
-  const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  const dateString = now.toLocaleDateString([], { month: 'short', day: 'numeric' });
-  document.getElementById('lastUpdated').textContent = `${timeString}, ${dateString}`;
-
-  // Animated temperature update
-  const tempVal = getTemperature(data.main.temp);
-  const tempSym = getTempUnitSymbol();
-  animateValue('mainTemp', parseFloat(document.getElementById('mainTemp').textContent) || 0,
-    tempVal, 800, tempSym);
-
-  // ⭐ UPDATE STATIC MAP PIN
-  if (data.coord) {
-    updateStaticMapPin(data.coord.lat, data.coord.lon, data.name);
+  if (marker) {
+    marker.setLatLng([lat, lon]);
+    marker.bindPopup(`<b>Weather of ${cityName}</b>`).openPopup();
+  } else {
+    marker = L.marker([lat, lon]).addTo(map)
+      .bindPopup(`<b>Weather of ${cityName}</b>`).openPopup();
   }
 
-  // ⭐ UPDATE CELESTIAL BODY (SUN/MOON)
-  const hour = new Date().getHours();
-  const isDaytime = hour >= 6 && hour < 18;
-  // ... (rest of function)
-  const celestialBody = document.getElementById('celestialBody');
+  // Soft flyTo effect for city searches
+  map.flyTo([lat, lon], map.getZoom() > 7 ? map.getZoom() : 7, {
+    duration: 1.5
+  });
 
-  if (celestialBody) {
-    if (isDaytime) {
-      celestialBody.classList.add('sun');
-      celestialBody.classList.remove('moon');
-    } else {
-      celestialBody.classList.add('moon');
-      celestialBody.classList.remove('sun');
+  // Ensure map tiles are loaded if container was hidden
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 400);
+}
+
+// 🚀 Robust Modal Triggers for Map and Dashboard
+document.addEventListener('click', (e) => {
+  const navBtn = e.target.closest('.nav-btn');
+  if (navBtn && navBtn.dataset.view === 'map') {
+    const modal = document.getElementById('mapModal');
+    if (modal) {
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        initMap();
+        if (map) map.invalidateSize();
+      }, 300); // Wait for modal transition
     }
   }
+});
 
-  // Details Grid with staggered animation
-  const details = [
-    { id: 'feelsLike', value: `${getTemperature(data.main.feels_like)}${getTempUnitSymbol()}` },
-    { id: 'windSpeed', value: getWindSpeed(data.wind.speed) },
-    { id: 'humidity', value: `${data.main.humidity}%` },
-    { id: 'clouds', value: `${data.clouds?.all || 0}%` },
-    { id: 'pressure', value: `${data.main.pressure} hPa` }
-  ];
 
-  details.forEach((detail, index) => {
-    setTimeout(() => {
-      document.getElementById(detail.id).textContent = detail.value;
-    }, index * 50);
-  });
 
-  // Rain Chance (from forecast data if available)
-  let pop = 0;
-  if (forecastData && forecastData.list && forecastData.list.length > 0) {
-    pop = Math.round(forecastData.list[0].pop * 100);
+function updateWeatherUI(data, forecastData = null) {
+  try {
+    if (!data || !data.main) throw new Error("Invalid weather data");
+
+    // City Name & Timestamp
+    if (document.getElementById('cityName')) document.getElementById('cityName').textContent = data.name || "Unknown Location";
+
+    const now = new Date();
+    const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const dateString = now.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    if (document.getElementById('lastUpdated')) {
+      document.getElementById('lastUpdated').textContent = `${timeString}, ${dateString}`;
+    }
+
+    // Temperature
+    const tempVal = getTemperature(data.main.temp);
+    const tempSym = getTempUnitSymbol();
+    try {
+      if (document.getElementById('mainTemp')) {
+        animateValue('mainTemp', parseFloat(document.getElementById('mainTemp').textContent) || 0,
+          tempVal, 800, tempSym);
+      }
+    } catch (e) {
+      if (document.getElementById('mainTemp')) document.getElementById('mainTemp').textContent = `${tempVal}${tempSym}`;
+    }
+
+    // ⭐ Map Marker (Safe)
+    try {
+      if (data.coord && typeof L !== 'undefined') {
+        updateMapMarker(data.coord.lat, data.coord.lon, data.name);
+      }
+    } catch (e) { console.warn("Map update failed", e); }
+
+    // ⭐ Celestial Body
+    try {
+      const isDaytime = now.getHours() >= 6 && now.getHours() < 18;
+      const celestialBody = document.getElementById('celestialBody');
+      if (celestialBody) {
+        celestialBody.classList.toggle('sun', isDaytime);
+        celestialBody.classList.toggle('moon', !isDaytime);
+      }
+    } catch (e) { console.warn("Celestial update failed", e); }
+
+    // Details Grid
+    const details = [
+      { id: 'feelsLike', value: `${getTemperature(data.main.feels_like)}${getTempUnitSymbol()}` },
+      { id: 'windSpeed', value: getWindSpeed(data.wind?.speed || 0) },
+      { id: 'humidity', value: `${data.main.humidity}%` },
+      { id: 'clouds', value: `${data.clouds?.all || 0}%` },
+      { id: 'pressure', value: `${data.main.pressure} hPa` },
+      { id: 'visibility', value: data.visibility !== undefined ? `${(data.visibility / 1000).toFixed(1)} km` : '-- km' },
+      { id: 'sunrise', value: data.sys?.sunrise ? formatTime(data.sys.sunrise) : '--:--' },
+      { id: 'sunset', value: data.sys?.sunset ? formatTime(data.sys.sunset) : '--:--' }
+    ];
+
+    details.forEach((detail, index) => {
+      const el = document.getElementById(detail.id);
+      if (el) {
+        setTimeout(() => { el.textContent = detail.value; }, index * 50);
+      }
+    });
+
+    // Update Weather Tip
+    if (typeof updateWeatherTip === 'function') updateWeatherTip(data);
+
+    // Rain Chance
+    try {
+      let pop = 0;
+      if (forecastData && forecastData.list && forecastData.list.length > 0) {
+        pop = Math.round(forecastData.list[0].pop * 100);
+        if (typeof updateHourlyForecast === 'function') updateHourlyForecast(forecastData.list.slice(0, 6));
+        if (typeof updateWeeklyForecast === 'function') updateWeeklyForecast(forecastData.list);
+      }
+      const rainEl = document.getElementById('rainChance');
+      if (rainEl) setTimeout(() => { rainEl.textContent = `${pop}%`; }, 250);
+    } catch (e) { console.warn("Forecast UI failed", e); }
+
+  } catch (error) {
+    console.error("Fatal UI update error:", error);
+    throw error; // Let loadWeatherData handle it
   }
-  setTimeout(() => {
-    document.getElementById('rainChance').textContent = `${pop}%`;
-  }, 250);
+}
+
+function formatTime(unix) {
+  const date = new Date(unix * 1000);
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function updateWeatherTip(data) {
+  const tipEl = document.getElementById('weatherTip');
+  if (!tipEl) return;
+
+  const temp = data.main.temp;
+  const clouds = data.clouds?.all || 0;
+  let tip = "Enjoy the day! The weather looks fine.";
+
+  if (temp > 30) tip = "Stay hydrated! It's getting hot outside. 🥤";
+  else if (temp < 15) tip = "Keep warm! It's a bit chilly. 🧣";
+  else if (clouds > 70) tip = "Don't forget your umbrella, it's cloudy! ☂️";
+  else if (data.wind.speed > 5) tip = "Hold onto your hat! It's windy. 🌬️";
+
+  tipEl.textContent = tip;
 }
 
 // Smooth number animation
@@ -937,8 +919,7 @@ if ('performance' in window) {
 // SETTINGS & STATE MANAGEMENT
 // ============================================================================
 
-let lastWeatherData = { current: null, forecast: null };
-let autoRefreshInterval = null;
+// Global state managed at top of file
 
 function saveSettings() {
   const settings = {

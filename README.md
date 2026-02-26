@@ -11,7 +11,7 @@ An end-to-end Machine Learning system that predicts weather-based heat stress an
 ---
 ## 🌦️ Live Demo
 
-🔗 **[Click here to try the application](https://hyperlocal-weather-impact-predictio-tau.vercel.app/)**
+🔗 **[Click here to try the application](https://weather-app-15-henna.vercel.app/)**
 
 ## ✨ Features
 

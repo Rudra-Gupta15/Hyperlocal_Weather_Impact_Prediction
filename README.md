@@ -9,6 +9,9 @@
 An end-to-end Machine Learning system that predicts weather-based heat stress and visualizes impact through a high-performance analytics dashboard. This project bridges the gap between raw ML metrics and user-centric data visualization.
 
 ---
+## 🌦️ Live Demo
+
+🔗 **[Click here to try the application](https://hyperlocal-weather-impact-predictio-tau.vercel.app/)**
 
 ## ✨ Features
 

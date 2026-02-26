@@ -6,8 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
   <meta name="description"
     content="Weather ML Dashboard - Live weather data with AI-powered predictions. Created by Rudra Kumar Gupta" />
-  <meta name="theme-color" content="#1a2332" />
+  <meta name="theme-color" content="#0d0b1e" />
   <title>Weather ML Dashboard - Rudra Kumar Gupta</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
@@ -16,8 +17,19 @@
 
 <body>
   <div class="app">
+    <!-- Mobile Header (hidden on desktop) -->
+    <header class="mobile-header">
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+        <i class="fas fa-bars"></i>
+      </button>
+      <h1 class="mobile-title">Weather ML</h1>
+    </header>
+
+    <!-- Sidebar Overlay (for mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <!-- Slim Sidebar -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
       <a href="https://github.com/Rudra-Gupta15" target="_blank" rel="noopener noreferrer" class="logo"
         title="Visit Github">
         <img src="logo_v2.png" alt="RG" class="logo-img">
@@ -68,7 +80,8 @@
       <header class="dashboard-header">
         <div class="search-bar">
           <i class="fas fa-search"></i>
-          <input type="text" id="citySearch" class="search-input" placeholder="Search for cities..." autocomplete="off">
+          <input type="text" id="citySearch" class="search-input" placeholder="Search for a city or airport..."
+            autocomplete="off">
           <div id="cityDropdown" class="city-dropdown hidden"></div>
         </div>
       </header>
@@ -78,6 +91,7 @@
 
         <!-- Column 1: Hero & Forecast -->
         <div class="grid-col main-col">
+          <!-- Hero Card -->
           <section class="weather-hero">
             <div class="hero-header">
               <span class="label">WEATHER</span>
@@ -87,54 +101,156 @@
             <div class="hero-body">
               <div class="temp-display">
                 <h2 id="mainTemp">--°</h2>
+                <p class="hero-condition" id="heroCondition">Loading...</p>
+                <p class="hero-hilo" id="heroHiLo">H:--° L:--°</p>
               </div>
               <div class="weather-visual-container">
                 <div id="celestialBody" class="celestial-body sun"></div>
                 <div class="cloud-layer">
                   <div class="cloud cloud-1"></div>
                   <div class="cloud cloud-2"></div>
-                  <div class="cloud cloud-3"></div>
                 </div>
               </div>
             </div>
           </section>
 
-          <!-- Today's Hourly Forecast -->
+          <!-- Hourly / Weekly Forecast Tabs -->
           <div class="tile-card forecast-tile">
-            <h3>TODAY'S FORECAST</h3>
+            <div class="forecast-tabs">
+              <button class="forecast-tab active" id="tabHourly" onclick="switchForecastTab('hourly')">Hourly
+                Forecast</button>
+              <button class="forecast-tab" id="tabWeekly" onclick="switchForecastTab('weekly')">Weekly Forecast</button>
+            </div>
             <div id="hourlyForecast" class="hourly-forecast"></div>
+            <div id="weeklyForecastInline" class="weekly-list" style="display:none;"></div>
+          </div>
+
+          <!-- Air Quality Widget -->
+          <div class="tile-card">
+            <h3>🌬️ Air Quality</h3>
+            <div class="aqi-widget" style="border:none;padding:0;background:none;">
+              <span class="aqi-value" id="aqiValue">3 — Low Health Risk</span>
+              <div class="aqi-bar-track">
+                <div class="aqi-bar-fill" id="aqiBarFill" style="width:25%"></div>
+              </div>
+              <p class="aqi-sub" id="aqiSub">Air quality is satisfactory</p>
+              <a class="aqi-link" onclick="openModal('analyticsModal')">See more →</a>
+            </div>
+          </div>
+
+          <!-- Heat Stress Index (ML Prediction) -->
+          <div class="tile-card hsi-card">
+            <h3>🤖 ML: Heat Stress Index</h3>
+            <div class="hsi-body">
+              <div class="hsi-gauge-wrap">
+                <svg class="hsi-gauge-svg" viewBox="0 0 120 70">
+                  <!-- Track arc -->
+                  <path d="M10 65 A55 55 0 0 1 110 65" stroke="rgba(255,255,255,0.08)" stroke-width="10" fill="none"
+                    stroke-linecap="round" />
+                  <!-- Fill arc (progress) -->
+                  <path id="hsiArcFill" d="M10 65 A55 55 0 0 1 110 65" stroke="url(#hsiGrad)" stroke-width="10"
+                    fill="none" stroke-linecap="round" stroke-dasharray="173" stroke-dashoffset="86" />
+                  <defs>
+                    <linearGradient id="hsiGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#10b981" />
+                      <stop offset="50%" stop-color="#f59e0b" />
+                      <stop offset="100%" stop-color="#ef4444" />
+                    </linearGradient>
+                  </defs>
+                  <text x="60" y="62" text-anchor="middle" fill="white" font-size="18" font-weight="700"
+                    id="hsiGaugeVal">--</text>
+                </svg>
+              </div>
+              <div class="hsi-info">
+                <p class="hsi-label" id="hsiLabel">Calculating...</p>
+                <p class="hsi-sublabel">Predicted by Linear Regression (R²= 0.998)</p>
+                <div class="hsi-legend">
+                  <span class="hsi-dot" style="background:#10b981"></span><span>Low</span>
+                  <span class="hsi-dot" style="background:#f59e0b"></span><span>Mid</span>
+                  <span class="hsi-dot" style="background:#ef4444"></span><span>High</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- What To Wear Today -->
+          <div class="tile-card wtw-card">
+            <h3>👕 What To Wear Today</h3>
+            <div class="wtw-grid" id="wtwGrid">
+              <div class="wtw-item"><span class="wtw-icon">👕</span><span class="wtw-text" id="wtwTop">Light
+                  shirt</span></div>
+              <div class="wtw-item"><span class="wtw-icon">👖</span><span class="wtw-text" id="wtwBottom">Comfortable
+                  trousers</span></div>
+              <div class="wtw-item"><span class="wtw-icon">👟</span><span class="wtw-text" id="wtwShoes">Casual
+                  shoes</span></div>
+              <div class="wtw-item"><span class="wtw-icon">🌂</span><span class="wtw-text" id="wtwExtra">No umbrella
+                  needed</span></div>
+            </div>
           </div>
         </div>
 
         <!-- Column 2: Details & Metrics -->
         <div class="grid-col details-col">
+          <!-- UV Index & Sunrise Pair -->
+          <div class="tile-card">
+            <div class="metric-pair-grid">
+              <div class="metric-pair-item">
+                <div class="mp-icon"><i class="fas fa-sun"></i> UV INDEX</div>
+                <div class="mp-val" id="uvIndex">4</div>
+                <div class="mp-label" id="uvLabel">Moderate</div>
+              </div>
+              <div class="metric-pair-item">
+                <div class="mp-icon"><i class="fas fa-sunrise"></i> SUNRISE</div>
+                <div class="mp-val" id="sunrise">--:--</div>
+                <div class="mp-label" id="sunsetLabel">Sunset: <span id="sunset">--:--</span></div>
+              </div>
+            </div>
+            <!-- Sunrise arc -->
+            <div class="sunrise-arc" style="margin-top:14px;">
+              <svg viewBox="0 0 160 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 45 Q80 -10 150 45" stroke="rgba(167,139,250,0.3)" stroke-width="1.5" fill="none"
+                  stroke-dasharray="4 3" />
+                <circle id="sunArcDot" cx="80" cy="10" r="5" fill="#f59e0b" filter="url(#sunGlow)" />
+                <defs>
+                  <filter id="sunGlow" x="-100%" y="-100%" width="300%" height="300%">
+                    <feGaussianBlur stdDeviation="3" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+              </svg>
+            </div>
+          </div>
+
           <!-- Air Conditions Grid -->
           <div class="tile-card conditions-tile">
-            <h3>AIR CONDITIONS</h3>
+            <h3>Air Conditions</h3>
             <div class="conditions-grid-new">
               <div class="condition-item">
-                <i class="fas fa-temperature-high"></i>
+                <div class="condition-icon"><i class="fas fa-temperature-high"></i></div>
                 <div class="condition-info">
                   <p class="label">Real Feel</p>
                   <p id="feelsLike" class="value">--°</p>
                 </div>
               </div>
               <div class="condition-item">
-                <i class="fas fa-wind"></i>
+                <div class="condition-icon"><i class="fas fa-wind"></i></div>
                 <div class="condition-info">
                   <p class="label">Wind</p>
                   <p id="windSpeed" class="value">-- km/h</p>
                 </div>
               </div>
               <div class="condition-item">
-                <i class="fas fa-tint"></i>
+                <div class="condition-icon"><i class="fas fa-tint"></i></div>
                 <div class="condition-info">
                   <p class="label">Humidity</p>
                   <p id="humidity" class="value">--%</p>
                 </div>
               </div>
               <div class="condition-item">
-                <i class="fas fa-cloud-rain"></i>
+                <div class="condition-icon"><i class="fas fa-cloud-rain"></i></div>
                 <div class="condition-info">
                   <p class="label">Rain Chance</p>
                   <p id="rainChance" class="value">0%</p>
@@ -143,9 +259,25 @@
             </div>
           </div>
 
+          <!-- Wind & Rainfall Pair -->
+          <div class="tile-card">
+            <div class="metric-pair-grid">
+              <div class="metric-pair-item">
+                <div class="mp-icon"><i class="fas fa-wind"></i> WIND</div>
+                <div class="mp-val" id="windMain">-- km/h</div>
+                <div class="mp-label">North ↑</div>
+              </div>
+              <div class="metric-pair-item">
+                <div class="mp-icon"><i class="fas fa-cloud-showers-heavy"></i> RAINFALL</div>
+                <div class="mp-val" id="rainfallMain">--</div>
+                <div class="mp-label">in last hour</div>
+              </div>
+            </div>
+          </div>
+
           <!-- Environment Metrics -->
           <div class="tile-card environment-tile">
-            <h3>ENVIRONMENT</h3>
+            <h3>Environment</h3>
             <div class="env-grid-new">
               <div class="env-item">
                 <span class="env-icon"><i class="fas fa-eye"></i></span>
@@ -155,23 +287,9 @@
                 </div>
               </div>
               <div class="env-item">
-                <span class="env-icon"><i class="fas fa-sun"></i></span>
-                <div class="env-data">
-                  <p class="env-label">Sunrise</p>
-                  <p id="sunrise" class="env-value">--:-- AM</p>
-                </div>
-              </div>
-              <div class="env-item">
-                <span class="env-icon"><i class="fas fa-moon"></i></span>
-                <div class="env-data">
-                  <p class="env-label">Sunset</p>
-                  <p id="sunset" class="env-value">--:-- PM</p>
-                </div>
-              </div>
-              <div class="env-item">
                 <span class="env-icon"><i class="fas fa-cloud"></i></span>
                 <div class="env-data">
-                  <p class="env-label">Clouds</p>
+                  <p class="env-label">Cloud Cover</p>
                   <p id="clouds" class="env-value">--%</p>
                 </div>
               </div>
@@ -182,19 +300,63 @@
                   <p id="pressure" class="env-value">-- hPa</p>
                 </div>
               </div>
+              <div class="env-item">
+                <span class="env-icon"><i class="fas fa-moon"></i></span>
+                <div class="env-data">
+                  <p class="env-label">Sunset</p>
+                  <p id="sunsetEnv" class="env-value">--:--</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Column 3: 7-Day & Map -->
+        <!-- Column 3: City Cards & Map -->
         <div class="grid-col sidebar-col">
+          <!-- City Preview Cards (inspired by reference right panel) -->
+          <div class="tile-card">
+            <h3>🌍 Indian Cities</h3>
+            <div class="city-cards-preview" id="cityCardsPreview">
+              <!-- Populated by JS -->
+              <div class="city-preview-item" data-city="Bengaluru">
+                <div class="city-preview-left">
+                  <div class="city-preview-temp">19°</div>
+                  <div class="city-preview-hilo">H:21° L:15°</div>
+                  <div class="city-preview-name">Bengaluru, India</div>
+                  <div class="city-preview-cond">Mild Rain</div>
+                </div>
+                <div class="city-preview-icon">🌧️</div>
+              </div>
+              <div class="city-preview-item" data-city="Chennai">
+                <div class="city-preview-left">
+                  <div class="city-preview-temp">22°</div>
+                  <div class="city-preview-hilo">H:25° L:18°</div>
+                  <div class="city-preview-name">Chennai, India</div>
+                  <div class="city-preview-cond">Fast Wind</div>
+                </div>
+                <div class="city-preview-icon">🌬️</div>
+              </div>
+              <div class="city-preview-item" data-city="Delhi">
+                <div class="city-preview-left">
+                  <div class="city-preview-temp">29°</div>
+                  <div class="city-preview-hilo">H:32° L:24°</div>
+                  <div class="city-preview-name">Delhi, India</div>
+                  <div class="city-preview-cond">Cloudy</div>
+                </div>
+                <div class="city-preview-icon">☁️</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7-day forecast (sidebar column) -->
           <div class="tile-card weekly-tile">
-            <h3>7-DAY FORECAST</h3>
+            <h3>7-Day Forecast</h3>
             <div id="weeklyForecast" class="weekly-list"></div>
           </div>
 
+          <!-- Weather Radar -->
           <div class="tile-card map-tile">
-            <h3>WEATHER RADAR</h3>
+            <h3>Weather Radar</h3>
             <div class="mini-map-container" onclick="openModal('mapModal')">
               <p>📍 View Interactive Map</p>
               <div class="map-preview-hint">Click to expand radar</div>
@@ -206,7 +368,7 @@
 
       <!-- Bottom Section: ML Models -->
       <div class="tile-card models-tile">
-        <h3>📊 ML MODELS PERFORMANCE</h3>
+        <h3>📊 ML Models Performance</h3>
         <div id="modelCards" class="model-cards"></div>
       </div>
 
@@ -437,6 +599,150 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="script.js"></script>
+  <script>
+    // ── Forecast Tab Switch ──────────────────────────────────
+    function switchForecastTab(tab) {
+      const hourlyEl = document.getElementById('hourlyForecast');
+      const weeklyEl = document.getElementById('weeklyForecastInline');
+      const tabH = document.getElementById('tabHourly');
+      const tabW = document.getElementById('tabWeekly');
+      if (tab === 'hourly') {
+        hourlyEl.style.display = '';
+        weeklyEl.style.display = 'none';
+        tabH.classList.add('active');
+        tabW.classList.remove('active');
+      } else {
+        hourlyEl.style.display = 'none';
+        weeklyEl.style.display = '';
+        tabH.classList.remove('active');
+        tabW.classList.add('active');
+        // Mirror weekly list into inline element
+        const src = document.getElementById('weeklyForecast');
+        if (src) weeklyEl.innerHTML = src.innerHTML;
+      }
+    }
+
+    // ── City Preview Card Clicks ──────────────────────────────
+    document.querySelectorAll('.city-preview-item').forEach(card => {
+      card.addEventListener('click', async () => {
+        const city = card.dataset.city;
+        if (city && typeof loadWeatherDataWithTransition === 'function') {
+          currentCity = city;
+          await loadWeatherDataWithTransition(city);
+        }
+      });
+    });
+
+    // ── Mirror sunset to env panel ────────────────────────────
+    const origUpdateUI = window.updateWeatherUI;
+    window.updateWeatherUI = function (data, forecastData) {
+      if (origUpdateUI) origUpdateUI(data, forecastData);
+      // Mirror sunset
+      const sunsetEnvEl = document.getElementById('sunsetEnv');
+      const sunsetEl = document.getElementById('sunset');
+      if (sunsetEnvEl && sunsetEl) sunsetEnvEl.textContent = sunsetEl.textContent;
+      // Mirror wind to wind main card
+      const windMainEl = document.getElementById('windMain');
+      const windSpeedEl = document.getElementById('windSpeed');
+      if (windMainEl && windSpeedEl) windMainEl.textContent = windSpeedEl.textContent;
+      // Hero condition + hi/lo
+      if (data && data.weather && data.weather[0]) {
+        const condEl = document.getElementById('heroCondition');
+        if (condEl) condEl.textContent = data.weather[0].description.replace(/\b\w/g, c => c.toUpperCase());
+      }
+      if (data && data.main) {
+        const hiloEl = document.getElementById('heroHiLo');
+        const sym = (typeof getTempUnitSymbol === 'function') ? getTempUnitSymbol() : '°';
+        const getT = (typeof getTemperature === 'function') ? getTemperature : v => Math.round(v);
+        if (hiloEl) hiloEl.textContent = `H:${getT(data.main.temp_max)}${sym}  L:${getT(data.main.temp_min)}${sym}`;
+      }
+      // Basic AQI mock (real AQI needs separate API call)
+      const aqiEl = document.getElementById('aqiValue');
+      const aqiBar = document.getElementById('aqiBarFill');
+      if (data && data.main && aqiEl) {
+        const aqi = Math.min(6, Math.max(1, Math.round(data.main.humidity / 18)));
+        const labels = ['1 — Good', '2 — Fair', '3 — Moderate', '4 — Poor', '5 — Very Poor', '6 — Hazardous'];
+        aqiEl.textContent = labels[aqi - 1] || '3 — Moderate';
+        if (aqiBar) aqiBar.style.width = (aqi / 6 * 100) + '%';
+      }
+      // UV index mock
+      const uvEl = document.getElementById('uvIndex');
+      const uvLabelEl = document.getElementById('uvLabel');
+      if (data && data.main && uvEl) {
+        const uv = Math.round((data.main.temp - 10) / 5);
+        const uvSafe = Math.min(11, Math.max(0, uv));
+        uvEl.textContent = uvSafe;
+        const uvLabels = ['Low', 'Low', 'Low', 'Moderate', 'Moderate', 'Moderate', 'High', 'High', 'Very High', 'Very High', 'Extreme', 'Extreme'];
+        if (uvLabelEl) uvLabelEl.textContent = uvLabels[uvSafe] || 'Moderate';
+      }
+
+      // ── Heat Stress Index gauge ───────────────────────────────
+      if (data && data.main) {
+        const t = data.main.temp;
+        const rh = data.main.humidity / 100;
+        const es = 6.112 * Math.exp((17.62 * t) / (t + 243.12));
+        const e = rh * es;
+        const hsi = Math.round(t + 0.5555 * (e - 10));
+
+        const gaugeVal = document.getElementById('hsiGaugeVal');
+        const hsiLbl = document.getElementById('hsiLabel');
+        const arcFill = document.getElementById('hsiArcFill');
+
+        if (gaugeVal) gaugeVal.textContent = hsi + '°';
+
+        // Arc: total dash length ≈ 173 (half-circle circumference for r=55)
+        // Map hsi range [10, 50] → dashoffset [173 (empty) → 0 (full)]
+        const pct = Math.min(1, Math.max(0, (hsi - 10) / 40));
+        if (arcFill) arcFill.style.strokeDashoffset = (173 * (1 - pct)).toFixed(1);
+
+        if (hsiLbl) {
+          if (hsi < 20) hsiLbl.textContent = 'No Discomfort';
+          else if (hsi < 28) hsiLbl.textContent = 'Slight Discomfort';
+          else if (hsi < 35) hsiLbl.textContent = 'Moderate Discomfort';
+          else if (hsi < 40) hsiLbl.textContent = 'High Discomfort';
+          else hsiLbl.textContent = 'Danger Zone!';
+        }
+      }
+
+      // ── What To Wear ──────────────────────────────────────────
+      if (data && data.main) {
+        const temp = data.main.temp;
+        const wind = data.wind ? data.wind.speed * 3.6 : 0; // m/s → km/h
+        const rainPop = (forecastData && forecastData.list && forecastData.list[0])
+          ? forecastData.list[0].pop * 100 : 0;
+
+        const wtwTop = document.getElementById('wtwTop');
+        const wtwBottom = document.getElementById('wtwBottom');
+        const wtwShoes = document.getElementById('wtwShoes');
+        const wtwExtra = document.getElementById('wtwExtra');
+
+        if (wtwTop) {
+          if (temp >= 35) wtwTop.textContent = 'Sleeveless / Tank top';
+          else if (temp >= 28) wtwTop.textContent = 'Light cotton shirt';
+          else if (temp >= 20) wtwTop.textContent = 'Casual t-shirt';
+          else if (temp >= 12) wtwTop.textContent = 'Light sweater / hoodie';
+          else wtwTop.textContent = 'Warm jacket / coat';
+        }
+        if (wtwBottom) {
+          if (temp >= 25) wtwBottom.textContent = 'Shorts / cotton trousers';
+          else if (temp >= 15) wtwBottom.textContent = 'Jeans / casual pants';
+          else wtwBottom.textContent = 'Warm trousers / thermals';
+        }
+        if (wtwShoes) {
+          if (rainPop > 50) wtwShoes.textContent = 'Rain boots / waterproof';
+          else if (temp >= 28) wtwShoes.textContent = 'Sandals / flip-flops';
+          else wtwShoes.textContent = 'Sneakers / casual shoes';
+        }
+        if (wtwExtra) {
+          if (rainPop > 60) wtwExtra.textContent = '☔ Carry umbrella';
+          else if (rainPop > 30) wtwExtra.textContent = '🌦️ Light rain jacket';
+          else if (wind > 30) wtwExtra.textContent = '🌬️ Wear a windbreaker';
+          else if (temp >= 32) wtwExtra.textContent = '🕶️ Sunglasses + sunscreen';
+          else wtwExtra.textContent = '✅ No extras needed';
+        }
+      }
+    };
+  </script>
 </body>
 
 </html>

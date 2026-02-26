@@ -74,6 +74,7 @@ let lastWeatherData = null;
 let autoRefreshInterval = null;
 let map;
 let marker;
+let pendingMarker = null;
 
 // ============================================================================
 // TIME-BASED WEATHER ICON FUNCTION (NEW!)
@@ -150,6 +151,9 @@ async function initializeApp() {
     document.body.style.opacity = '1';
   }, 100);
 
+  // Setup mobile menu (for responsive design)
+  setupMobileMenu();
+
   // Setup navigation
   setupNavigation();
 
@@ -167,6 +171,58 @@ async function initializeApp() {
 
   // Add keyboard navigation
   setupKeyboardNavigation();
+}
+
+// ============================================================================
+// MOBILE MENU SETUP (for responsive design)
+// ============================================================================
+
+function setupMobileMenu() {
+  const menuToggle = document.getElementById('menuToggle');
+  const sidebar = document.getElementById('sidebar');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const navButtons = document.querySelectorAll('.nav-btn');
+
+  // Return if elements don't exist (desktop view)
+  if (!menuToggle || !sidebar || !sidebarOverlay) return;
+
+  // Toggle sidebar on menu button click
+  menuToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('active');
+    sidebarOverlay.classList.toggle('active');
+    document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+  });
+
+  // Close sidebar when clicking overlay
+  sidebarOverlay.addEventListener('click', () => {
+    sidebar.classList.remove('active');
+    sidebarOverlay.classList.remove('active');
+    document.body.style.overflow = '';
+  });
+
+  // Close sidebar when clicking a nav button on mobile
+  navButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (window.innerWidth <= 768) {
+        sidebar.classList.remove('active');
+        sidebarOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    });
+  });
+
+  // Handle window resize
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      if (window.innerWidth > 768) {
+        sidebar.classList.remove('active');
+        sidebarOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    }, 250);
+  });
 }
 
 // ============================================================================
@@ -574,47 +630,34 @@ function initMap() {
 }
 
 function updateMapMarker(lat, lon, cityName = "Your Location") {
-  if (!map) initMap();
-
-  // ⭐ Bulletproof validation for NaN, null, or undefined coordinates
   const validLat = typeof lat === 'number' ? lat : parseFloat(lat);
   const validLon = typeof lon === 'number' ? lon : parseFloat(lon);
-
   if (!Number.isFinite(validLat) || !Number.isFinite(validLon)) {
-    console.warn("⚠️ Skipping map update: Invalid coordinates detected", { lat, lon });
-    console.trace(); // Trace the caller to find source of NaN
-    return;
+    console.warn("⚠️ Skipping map update: Invalid coordinates", { lat, lon }); return;
   }
+  pendingMarker = { lat: validLat, lon: validLon, cityName };
+  if (!map) initMap();
+  if (!map) { console.info("ℹ️ Map not ready — marker queued."); return; }
+  applyPendingMarker();
+}
 
-  // Use the validated coordinates from here on
-  const coords = [validLat, validLon];
-
+function applyPendingMarker() {
+  if (!map || !pendingMarker) return;
+  const { lat, lon, cityName } = pendingMarker;
+  const coords = [lat, lon];
   if (marker) {
     marker.setLatLng(coords);
     marker.bindPopup(`<b>Weather of ${cityName}</b>`).openPopup();
   } else {
-    marker = L.marker(coords).addTo(map)
-      .bindPopup(`<b>Weather of ${cityName}</b>`).openPopup();
+    marker = L.marker(coords).addTo(map).bindPopup(`<b>Weather of ${cityName}</b>`).openPopup();
   }
-
-  // Soft flyTo effect for city searches - ONLY if map is visible
-  if (map && map.getContainer().offsetParent !== null) {
-    try {
-      map.flyTo(coords, map.getZoom() > 7 ? map.getZoom() : 7, {
-        duration: 1.5
-      });
-    } catch (e) {
-      console.warn("flyTo failed:", e);
-    }
+  if (map.getContainer().offsetParent !== null) {
+    try { map.flyTo(coords, map.getZoom() > 7 ? map.getZoom() : 7, { duration: 1.5 }); }
+    catch (e) { console.warn("flyTo failed:", e); }
   }
-
-  // Ensure map tiles are loaded if container was hidden
-  setTimeout(() => {
-    map.invalidateSize();
-  }, 400);
+  setTimeout(() => { map.invalidateSize(); }, 400);
 }
 
-// 🚀 Robust Modal Triggers for Map and Dashboard
 document.addEventListener('click', (e) => {
   const navBtn = e.target.closest('.nav-btn');
   if (navBtn && navBtn.dataset.view === 'map') {
@@ -623,8 +666,8 @@ document.addEventListener('click', (e) => {
       modal.classList.remove('hidden');
       setTimeout(() => {
         initMap();
-        if (map) map.invalidateSize();
-      }, 300); // Wait for modal transition
+        if (map) { map.invalidateSize(); applyPendingMarker(); }
+      }, 300);
     }
   }
 });
@@ -759,22 +802,29 @@ function animateValue(id, start, end, duration, suffix = '') {
 
 function updateHourlyForecast(forecastList) {
   const container = document.getElementById('hourlyForecast');
+  const nowHour = new Date().getHours();
 
   container.innerHTML = forecastList.map((item, index) => {
     const time = new Date(item.dt * 1000);
     const hours = time.getHours();
     const period = hours >= 12 ? 'PM' : 'AM';
     const displayHour = hours % 12 || 12;
+    const isNow = index === 0;
 
     const iconCode = item.weather[0]?.icon || '01d';
-
-    // ⭐ USE TIME-BASED ICON FUNCTION
     const icon = getWeatherIconByTime(iconCode);
 
+    // Rain probability
+    const pop = item.pop != null ? Math.round(item.pop * 100) : 0;
+    const rainHtml = pop > 0
+      ? `<div class="hour-rain">${pop}%</div>`
+      : '';
+
     return `
-      <div class="hour-item" style="animation-delay: ${index * 0.1}s">
-        <div class="hour-time">${displayHour} ${period}</div>
+      <div class="hour-item${isNow ? ' now-item' : ''}" style="animation-delay: ${index * 0.1}s">
+        <div class="hour-time">${isNow ? 'Now' : displayHour + ' ' + period}</div>
         <div class="hour-icon">${icon}</div>
+        ${rainHtml}
         <div class="hour-temp">${getTemperature(item.main.temp)}°</div>
       </div>
     `;

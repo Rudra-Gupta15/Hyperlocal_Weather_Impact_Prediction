@@ -367,18 +367,10 @@ function setupCitySearch() {
     }, 150); // Smooth debounce delay
   });
 
-  // Enhanced focus/blur effects
-  searchInput.addEventListener('focus', () => {
-    searchInput.parentElement.style.transform = 'scale(1.01)';
-  });
-
-  searchInput.addEventListener('blur', () => {
-    searchInput.parentElement.style.transform = 'scale(1)';
-  });
-
   // Close dropdown on outside click
   document.addEventListener('click', (e) => {
-    if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+    const wrapper = searchInput.closest('.search-wrapper') || searchInput.parentElement;
+    if (!wrapper.contains(e.target)) {
       dropdown.classList.add('hidden');
     }
   });
